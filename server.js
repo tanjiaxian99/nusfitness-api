@@ -42,6 +42,10 @@ passport.use(new LocalStrategy({ usernameField: 'email' }, User.authenticate()))
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
+app.get('/', (req, res) => {
+	res.send('hello world!');
+})
+
 app.post('/register', async (req, res) => {
 	try {
 		const { email, password } = req.body;
