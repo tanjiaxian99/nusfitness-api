@@ -6,6 +6,8 @@ const LocalStrategy = require('passport-local');
 const User = require('./models/user');
 const cors = require('cors');
 
+require('dotenv').config();
+
 const uri = process.env.MONGODB_URI;
 
 // Database
@@ -15,7 +17,7 @@ const uri = process.env.MONGODB_URI;
 //     useCreateIndex: true,
 //     useFindAndModify: false
 // })
-mongoose.connect(process.env.MONGODB_URI, {
+mongoose.connect(uri, {
 	useNewUrlParser: true,
 	useUnifiedTopology: true,
 	useCreateIndex: true,
