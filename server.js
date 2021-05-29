@@ -63,6 +63,7 @@ app.post('/login', passport.authenticate('local'), (req, res) => {
 
 app.get('/logout', (req, res) => {
 	req.logout();
+	console.log(req.isAuthenticated());
 	res.status(200).json({ success: true });
 })
 
@@ -71,6 +72,4 @@ app.get('/logout', (req, res) => {
 // 	res.json({ authenticated });
 // })
 
-app.listen(3000, () => {
-	console.log("server running on port 3000!")
-});
+app.listen(process.env.PORT || 3000);
