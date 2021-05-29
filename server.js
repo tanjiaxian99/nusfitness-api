@@ -6,12 +6,20 @@ const LocalStrategy = require('passport-local');
 const User = require('./models/user');
 const cors = require('cors');
 
+const uri = process.env.MONGODB_URI;
+
 // Database
-mongoose.connect('mongodb://localhost:27017/nusfitness', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useCreateIndex: true,
-    useFindAndModify: false
+// mongoose.connect('mongodb://localhost:27017/nusfitness', {
+//     useNewUrlParser: true,
+//     useUnifiedTopology: true,
+//     useCreateIndex: true,
+//     useFindAndModify: false
+// })
+mongoose.connect(process.env.MONGODB_URI, {
+	useNewUrlParser: true,
+	useUnifiedTopology: true,
+	useCreateIndex: true,
+	useFindAndModify: false
 })
 
 const db = mongoose.connection;
