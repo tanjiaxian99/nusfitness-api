@@ -93,6 +93,25 @@ app.post("/book", (req, res) => {
   res.status(200).json({ success: true });
 });
 
+app.get("/slots", (req, res) => {
+  const bookingCollection = db.collection("booking");
+  const { facility, date, hour } = req.body;
+  const count = bookingCollection.count(
+    {
+      facility,
+      date,
+      hour,
+    },
+    (error, result) => {
+      if (error) {
+        res.status(400).json(error);
+      } else {
+        res.json(result);
+      }
+    }
+  );
+});
+
 // app.get('/isLoggedIn', (req, res) => {
 // 	const authenticated = req.isAuthenticated();
 // 	res.json({ authenticated });
