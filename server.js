@@ -93,10 +93,10 @@ app.post("/book", (req, res) => {
   res.status(200).json({ success: true });
 });
 
-app.get("/slots", (req, res) => {
+app.post("/slots", (req, res) => {
   const bookingCollection = db.collection("booking");
   const { facility, date, hour } = req.body;
-  const count = bookingCollection.count(
+  const count = bookingCollection.countDocuments(
     {
       facility,
       date,
@@ -112,9 +112,9 @@ app.get("/slots", (req, res) => {
   );
 });
 
-// app.get('/isLoggedIn', (req, res) => {
-// 	const authenticated = req.isAuthenticated();
-// 	res.json({ authenticated });
-// })
+// app.get("/isLoggedIn", (req, res) => {
+//   const authenticated = req.isAuthenticated();
+//   res.json({ authenticated });
+// });
 
 app.listen(process.env.PORT || 3000);
