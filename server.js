@@ -8,21 +8,22 @@ const cors = require('cors');
 
 require('dotenv').config();
 
-const uri = process.env.MONGODB_URI;
+// Heroku
+// const uri = process.env.MONGODB_URI;
 
-// Database
-// mongoose.connect('mongodb://localhost:27017/nusfitness', {
-//     useNewUrlParser: true,
-//     useUnifiedTopology: true,
-//     useCreateIndex: true,
-//     useFindAndModify: false
+// mongoose.connect(uri, {
+// 	useNewUrlParser: true,
+// 	useUnifiedTopology: true,
+// 	useCreateIndex: true,
+// 	useFindAndModify: false
 // })
 
-mongoose.connect(uri, {
-	useNewUrlParser: true,
-	useUnifiedTopology: true,
-	useCreateIndex: true,
-	useFindAndModify: false
+// Localhost
+mongoose.connect('mongodb://localhost:27017/nusfitness', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true,
+    useFindAndModify: false
 })
 
 const db = mongoose.connection;
@@ -87,4 +88,4 @@ app.get('/logout', (req, res) => {
 // 	res.json({ authenticated });
 // })
 
-app.listen(process.env.PORT || 3000);
+app.listen(process.env.PORT || 5000);
