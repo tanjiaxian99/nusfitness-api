@@ -1,13 +1,13 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const session = require("express-session");
+const MongoStore = require("connect-mongo");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const User = require("./models/user");
 const cors = require("cors");
 
 require("dotenv").config();
-
 const uri = process.env.MONGODB_URI;
 
 // Database
@@ -34,13 +34,28 @@ db.once("open", () => {
 const app = express();
 
 app.use(express.json());
-app.use(cors({ origin: true, credentials: true }));
+app.use(express.urlencoded());
+
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 
 // Session
 const sessionConfig = {
   secret: "secret",
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: "mongodb://localhost:27017/nusfitness",
+    collectionName: "sessions",
+  }),
+  cookie: {
+    secure: false,
+    maxAge: 30 * 1000 * 60 * 60 * 24,
+  },
 };
 
 app.use(session(sessionConfig));
@@ -76,6 +91,7 @@ app.post("/register", async (req, res) => {
 
 app.post("/login", passport.authenticate("local"), (req, res) => {
   res.status(200).json({ success: true });
+  console.log("/login", req.isAuthenticated());
 });
 
 app.get("/logout", (req, res) => {
@@ -86,10 +102,7 @@ app.get("/logout", (req, res) => {
 
 app.post("/book", (req, res) => {
   const bookingCollection = db.collection("booking");
-  bookingCollection
-    .insertOne(req.body)
-    .then((result) => console.log(result))
-    .catch((error) => console.error(error));
+  bookingCollection.insertOne(req.body).catch((error) => console.error(error));
   res.status(200).json({ success: true });
 });
 
@@ -112,9 +125,9 @@ app.post("/slots", (req, res) => {
   );
 });
 
-// app.get("/isLoggedIn", (req, res) => {
-//   const authenticated = req.isAuthenticated();
-//   res.json({ authenticated });
-// });
+app.get("/isLoggedIn", (req, res) => {
+  const authenticated = req.isAuthenticated();
+  res.json({ authenticated });
+});
 
 app.listen(process.env.PORT || 3000);
