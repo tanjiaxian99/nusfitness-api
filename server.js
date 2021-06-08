@@ -6,6 +6,11 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const User = require("./models/user");
 const cors = require("cors");
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const JwtStrategy = require("passport-jwt").Strategy;
+const ExtractJwt = require("passport-jwt").ExtractJwt;
+const jwt = require("jsonwebtoken");
 
 require("dotenv").config();
 const uri = process.env.MONGODB_URI;
@@ -33,8 +38,8 @@ db.once("open", () => {
 
 const app = express();
 
-app.use(express.json());
-app.use(express.urlencoded());
+app.use(bodyParser.json());
+app.use(cookieParser(process.env.COOKIE_SECRET));
 
 app.use(
   cors({
@@ -44,49 +49,105 @@ app.use(
 );
 
 // Session
-const sessionConfig = {
-  secret: "secret",
-  resave: false,
-  saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: "mongodb://localhost:27017/nusfitness",
-    collectionName: "sessions",
-  }),
-  cookie: {
-    secure: false,
-    maxAge: 30 * 1000 * 60 * 60 * 24,
-  },
+// const sessionConfig = {
+//   secret: "secret",
+//   resave: false,
+//   saveUninitialized: false,
+//   store: MongoStore.create({
+//     mongoUrl: "mongodb://localhost:27017/nusfitness",
+//     collectionName: "sessions",
+//   }),
+//   cookie: {
+//     secure: false,
+//     maxAge: 30 * 1000 * 60 * 60 * 24,
+//   },
+// };
+
+// app.use(session(sessionConfig));
+
+// Jwt Stuff
+const opts = {}
+opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
+opts.secretOrKey = process.env.JWT_SECRET;
+
+passport.use(new JwtStrategy(opts, function(jwt_payload, done) {
+    User.findOne({id: jwt_payload.sub}, function(err, user) {
+        if (err) {
+            return done(err, false);
+        }
+        if (user) {
+            return done(null, user);
+        } else {
+            return done(null, false);
+        }
+    });
+}));
+
+const COOKIE_OPTIONS = {
+	httpOnly: true,
+	// Since localhost is not having https protocol,
+	// secure cookies do not work correctly (in postman)
+	secure: !dev,
+	signed: true,
+	maxAge: eval(process.env.REFRESH_TOKEN_EXPIRY) * 1000,
+	sameSite: "none",
 };
 
-app.use(session(sessionConfig));
+const getToken = user => {
+	return jwt.sign(user, process.env.JWT_SECRET, {
+		expiresIn: eval(process.env.SESSION_EXPIRY),
+	})
+};
+
+const getRefreshToken = user => {
+	return jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, {
+		expiresIn: eval(process.env.REFRESH_TOKEN_EXPIRY),
+	});
+};
+
+const verifyUser = passport.authenticate("jwt", { session: false });
+
+passport.use(
+	new LocalStrategy({ usernameField: "email" }, User.authenticate())
+  );
+  
+passport.serializeUser(User.serializeUser());
 
 // Passport.js
 app.use(passport.initialize());
-app.use(passport.session());
-passport.use(
-  new LocalStrategy({ usernameField: "email" }, User.authenticate())
-);
-
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
+// app.use(passport.session());
 
 app.get("/", (req, res) => {
   res.send("hello world!");
 });
 
-app.post("/register", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = new User({ email });
-    const newUser = await User.register(user, password);
-    req.login(newUser, (err) => {
-      console.log(err);
-    });
-    res.json(newUser);
-  } catch (err) {
-    console.log(err);
-    res.status(400).json(err);
-  }
+app.post("/register", (req, res) => {
+  	try {
+		const { email, password } = req.body;
+		const user = new User({ email });
+		User.register(user, password, (err, user) => {
+			if (err) {
+				res.statusCode = 500;
+				res.send(err);
+			} else {
+				const token = getToken({ _id: user._id });
+				const refreshToken = getRefreshToken({ _id: user._id });
+				user.refreshToken.push({ refreshToken });
+				user.save((err, user) => {
+					if (err) {
+						res.statusCode = 500;
+						res.send(err);
+					} else {
+						res.cookie("refreshToken", refreshToken, COOKIE_OPTIONS);
+						res.send({ success: true, token });
+					}
+				})
+			}	
+		});
+	} catch (err) {
+		res.statusCode = 500;
+		res.send(err);
+	}
 });
 
 app.post("/login", passport.authenticate("local"), (req, res) => {
