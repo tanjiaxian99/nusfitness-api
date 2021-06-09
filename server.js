@@ -113,7 +113,7 @@ app.post("/book", (req, res) => {
 app.post("/slots", (req, res) => {
   const bookingCollection = db.collection("booking");
   const { facility, date, hour } = req.body;
-  const count = bookingCollection.countDocuments(
+  bookingCollection.countDocuments(
     {
       facility,
       date,
@@ -127,6 +127,28 @@ app.post("/slots", (req, res) => {
       }
     }
   );
+});
+
+app.get("/bookedSlots", (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json("Unauthorized");
+  } else {
+    const email = req.user.email;
+    const bookingCollection = db.collection("booking");
+
+    bookingCollection
+      .find({
+        email,
+      })
+      .toArray()
+      .then((result, error) => {
+        if (result) {
+          res.json(result);
+        } else {
+          res.status(400).json(error);
+        }
+      });
+  }
 });
 
 app.get("/isLoggedIn", (req, res) => {
