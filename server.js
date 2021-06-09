@@ -91,7 +91,6 @@ app.post("/register", async (req, res) => {
 
 app.post("/login", passport.authenticate("local"), (req, res) => {
   res.status(200).json({ success: true });
-  console.log("/login", req.isAuthenticated());
 });
 
 app.get("/logout", (req, res) => {
@@ -101,9 +100,14 @@ app.get("/logout", (req, res) => {
 });
 
 app.post("/book", (req, res) => {
-  const bookingCollection = db.collection("booking");
-  bookingCollection.insertOne(req.body).catch((error) => console.error(error));
-  res.status(200).json({ success: true });
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ success: false });
+  } else {
+    const bookingCollection = db.collection("booking");
+    const booking = { email: req.user.email, ...req.body };
+    bookingCollection.insertOne(booking).catch((error) => console.error(error));
+    res.status(200).json({ success: true });
+  }
 });
 
 app.post("/slots", (req, res) => {
