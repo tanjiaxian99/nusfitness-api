@@ -129,16 +129,18 @@ app.post("/slots", (req, res) => {
   );
 });
 
-app.get("/bookedSlots", (req, res) => {
+app.post("/bookedSlots", (req, res) => {
   if (!req.isAuthenticated()) {
     res.status(401).json("Unauthorized");
   } else {
     const email = req.user.email;
+    const facility = req.body.facility;
     const bookingCollection = db.collection("booking");
 
     bookingCollection
       .find({
         email,
+        facility,
       })
       .toArray()
       .then((result, error) => {
