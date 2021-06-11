@@ -99,14 +99,52 @@ app.get("/logout", (req, res) => {
   res.status(200).json({ success: true });
 });
 
+app.post("/cancel", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ success: false });
+  } else {
+    const email = req.user.email;
+    const { facility, date, hour } = req.body;
+
+    // Unable to cancel slot if it is 2 hours before the actual slot
+    const slotTime = new Date(date).setHours(parseInt(hour.slice(0, 2)) - 2);
+    const currentTime = new Date().getTime();
+    if (slotTime < currentTime) {
+      res.status(403).json({ success: false });
+      return;
+    }
+
+    // Slot can be cancelled
+    const bookingCollection = db.collection("booking");
+    const result = await bookingCollection.deleteOne({
+      email,
+      facility,
+      date,
+      hour,
+    });
+    if (result.deletedCount === 0) {
+      console.log("No documents matched the query. Deleted 0 documents.");
+      res.status(404).json({ success: false });
+    } else {
+      res.status(200).json({ success: true });
+    }
+  }
+});
+
 app.post("/book", (req, res) => {
   if (!req.isAuthenticated()) {
     res.status(401).json({ success: false });
   } else {
     const bookingCollection = db.collection("booking");
     const booking = { email: req.user.email, ...req.body };
-    bookingCollection.insertOne(booking).catch((error) => console.error(error));
-    res.status(200).json({ success: true });
+    bookingCollection.insertOne(booking, (error, result) => {
+      if (error) {
+        console.log(error);
+        res.status(400).json(error);
+      } else {
+        res.status(200).json({ success: true });
+      }
+    });
   }
 });
 
