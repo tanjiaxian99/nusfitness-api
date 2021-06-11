@@ -131,20 +131,34 @@ app.post("/cancel", async (req, res) => {
   }
 });
 
-app.post("/book", (req, res) => {
+app.post("/book", async (req, res) => {
   if (!req.isAuthenticated()) {
     res.status(401).json({ success: false });
   } else {
     const bookingCollection = db.collection("booking");
-    const booking = { email: req.user.email, ...req.body };
-    bookingCollection.insertOne(booking, (error, result) => {
-      if (error) {
-        console.log(error);
-        res.status(400).json(error);
-      } else {
-        res.status(200).json({ success: true });
-      }
+    const { facility, date, hour } = req.body;
+    const maxCapacity = 20;
+
+    // Make sure count does not exceed max capacity in the event of multiple bookings
+    const count = await bookingCollection.countDocuments({
+      facility,
+      date,
+      hour,
     });
+
+    if (count >= maxCapacity) {
+      res.status(400).json({ success: false });
+    } else {
+      const booking = { email: req.user.email, ...req.body };
+      bookingCollection.insertOne(booking, (error, result) => {
+        if (error) {
+          console.log(error);
+          res.status(400).json(error);
+        } else {
+          res.status(200).json({ success: true });
+        }
+      });
+    }
   }
 });
 
