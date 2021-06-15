@@ -215,6 +215,30 @@ app.get("/isLoggedIn", (req, res) => {
   res.json({ authenticated });
 });
 
+app.post("/traffic", (req, res) => {
+  const trafficCollection = db.collection("traffic");
+  const filter = req.body;
+  const dateFilter = filter.date;
+
+  // Convert date string to date object
+  if (dateFilter != undefined) {
+    Object.keys(dateFilter).map(
+      (key) => (dateFilter[key] = new Date(dateFilter[key]))
+    );
+  }
+
+  trafficCollection
+    .find(filter)
+    .toArray()
+    .then((result, error) => {
+      if (result) {
+        res.json(result);
+      } else {
+        res.status(400).json(error);
+      }
+    });
+});
+
 // Request for pool/gym traffic
 const requestTraffic = async () => {
   // Retrieve nuspw cookie
@@ -358,7 +382,7 @@ const updateTrafficCollection = async () => {
   let now = new Date();
   if (
     now.getHours() >= 7 &&
-    now.getHours() <= 2200 &&
+    now.getHours() <= 22 &&
     now.getMinutes() % 5 === 0 &&
     now.getSeconds() === 0
   ) {
