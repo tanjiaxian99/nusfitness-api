@@ -100,7 +100,6 @@ app.post("/login", passport.authenticate("local"), (req, res) => {
 
 app.get("/logout", (req, res) => {
   req.logout();
-  console.log(req.isAuthenticated());
   res.status(200).json({ success: true });
 });
 
@@ -382,7 +381,7 @@ const updateTrafficCollection = async () => {
   let now = new Date();
   if (
     now.getHours() >= 7 &&
-    now.getHours() <= 22 &&
+    now.getHours() <= 21 &&
     now.getMinutes() % 5 === 0 &&
     now.getSeconds() === 0
   ) {
