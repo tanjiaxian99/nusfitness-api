@@ -218,6 +218,7 @@ app.post("/traffic", async (req, res) => {
   const trafficCollection = db.collection("traffic");
   const facility = req.body.facility;
   const dateFilter = req.body.date;
+  let dayFilter = req.body.day;
 
   // Convert date string to date object
   if (dateFilter != undefined) {
@@ -226,15 +227,30 @@ app.post("/traffic", async (req, res) => {
     );
   }
 
+  if (dayFilter == undefined) {
+    dayFilter = [];
+  }
+
   try {
     const aggregate = await trafficCollection.aggregate([
       {
+        $project: {
+          date: 1,
+          traffic: 1,
+          day: { $dayOfWeek: "$date" }, // Add a new field for the day of the week
+        },
+      },
+      {
         $match: {
-          date: dateFilter,
+          date: dateFilter, // Filter by date range
+          day: {
+            $in: dayFilter, // Filter by day
+          },
         },
       },
       {
         $group: {
+          // Group by time
           _id: {
             hour: {
               $dateToString: { date: "$date", format: "%H", timezone: "+08" },
@@ -246,9 +262,10 @@ app.post("/traffic", async (req, res) => {
           count: { $avg: { $arrayElemAt: ["$traffic", facility] } },
         },
       },
-      { $sort: { _id: 1 } },
+      { $sort: { _id: 1 } }, // Sort by time
       {
         $project: {
+          // Create a date field containing data objects
           date: {
             $dateFromParts: {
               year: new Date().getFullYear(),
@@ -259,12 +276,12 @@ app.post("/traffic", async (req, res) => {
               timezone: "+08",
             },
           },
+          // Round count to 1 dp
           count: { $round: ["$count", 1] },
         },
       },
     ]);
     res.json(await aggregate.toArray());
-    console.log(await aggregate.toArray());
   } catch (err) {
     res.status(400).json(err);
   }
