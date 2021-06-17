@@ -214,10 +214,10 @@ app.get("/isLoggedIn", (req, res) => {
   res.json({ authenticated });
 });
 
-app.post("/traffic", (req, res) => {
+app.post("/traffic", async (req, res) => {
   const trafficCollection = db.collection("traffic");
-  const filter = req.body;
-  const dateFilter = filter.date;
+  const facility = req.body.facility;
+  const dateFilter = req.body.date;
 
   // Convert date string to date object
   if (dateFilter != undefined) {
@@ -226,16 +226,48 @@ app.post("/traffic", (req, res) => {
     );
   }
 
-  trafficCollection
-    .find(filter)
-    .toArray()
-    .then((result, error) => {
-      if (result) {
-        res.json(result);
-      } else {
-        res.status(400).json(error);
-      }
-    });
+  try {
+    const aggregate = await trafficCollection.aggregate([
+      {
+        $match: {
+          date: dateFilter,
+        },
+      },
+      {
+        $group: {
+          _id: {
+            hour: {
+              $dateToString: { date: "$date", format: "%H", timezone: "+08" },
+            },
+            minute: {
+              $dateToString: { date: "$date", format: "%M", timezone: "+08" },
+            },
+          },
+          count: { $avg: { $arrayElemAt: ["$traffic", facility] } },
+        },
+      },
+      { $sort: { _id: 1 } },
+      {
+        $project: {
+          date: {
+            $dateFromParts: {
+              year: new Date().getFullYear(),
+              month: new Date().getMonth() + 1, // getMonth is 0-index while month is 1-index
+              day: new Date().getDate(),
+              hour: { $convert: { input: "$_id.hour", to: "int" } },
+              minute: { $convert: { input: "$_id.minute", to: "int" } },
+              timezone: "+08",
+            },
+          },
+          count: { $round: ["$count", 1] },
+        },
+      },
+    ]);
+    res.json(await aggregate.toArray());
+    console.log(await aggregate.toArray());
+  } catch (err) {
+    res.status(400).json(err);
+  }
 });
 
 // Request for pool/gym traffic
