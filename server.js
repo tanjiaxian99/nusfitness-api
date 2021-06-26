@@ -193,19 +193,32 @@ app.post("/bookedSlots", (req, res) => {
     const facility = req.body.facility;
     const bookingCollection = db.collection("booking");
 
-    bookingCollection
-      .find({
-        email,
-        facility,
-      })
-      .toArray()
-      .then((result, error) => {
-        if (result) {
-          res.json(result);
-        } else {
-          res.status(400).json(error);
-        }
-      });
+    facility 
+      ? bookingCollection
+        .find({
+          email,
+          facility,
+        })
+        .toArray()
+        .then((result, error) => {
+          if (result) {
+            res.json(result);
+          } else {
+            res.status(400).json(error);
+          }
+        })
+      : bookingCollection
+        .find({
+          email
+        })
+        .toArray()
+        .then((result, error) => {
+          if (result) {
+            res.json(result);
+          } else {
+            res.status(400).json(error);
+          }
+        })
   }
 });
 
