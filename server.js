@@ -9,6 +9,7 @@ const cors = require("cors");
 const fetch = require("node-fetch");
 const HTMLParser = require("node-html-parser");
 const cookie = require("cookie");
+const dateFns = require("date-fns");
 
 require("dotenv").config();
 
@@ -108,10 +109,10 @@ app.post("/cancel", async (req, res) => {
     res.status(401).json({ success: false });
   } else {
     const email = req.user.email;
-    const { facility, date, hour } = req.body;
+    const { facility, date } = req.body;
 
     // Unable to cancel slot if it is 2 hours before the actual slot
-    const slotTime = new Date(date).setHours(parseInt(hour.slice(0, 2)) - 2);
+    const slotTime = dateFns.addHours(new Date(date), -2);
     const currentTime = new Date().getTime();
     if (slotTime < currentTime) {
       res.status(403).json({ success: false });
@@ -124,7 +125,6 @@ app.post("/cancel", async (req, res) => {
       email,
       facility,
       date,
-      hour,
     });
     if (result.deletedCount === 0) {
       console.log("No documents matched the query. Deleted 0 documents.");
@@ -140,14 +140,13 @@ app.post("/book", async (req, res) => {
     res.status(401).json({ success: false });
   } else {
     const bookingCollection = db.collection("booking");
-    const { facility, date, hour } = req.body;
+    const { facility, date } = req.body;
     const maxCapacity = 20;
 
     // Make sure count does not exceed max capacity in the event of multiple bookings
     const count = await bookingCollection.countDocuments({
       facility,
       date,
-      hour,
     });
 
     if (count >= maxCapacity) {
@@ -168,12 +167,11 @@ app.post("/book", async (req, res) => {
 
 app.post("/slots", (req, res) => {
   const bookingCollection = db.collection("booking");
-  const { facility, date, hour } = req.body;
+  const { facility, date } = req.body;
   bookingCollection.countDocuments(
     {
       facility,
       date,
-      hour,
     },
     (error, result) => {
       if (error) {
@@ -193,32 +191,35 @@ app.post("/bookedSlots", (req, res) => {
     const facility = req.body.facility;
     const bookingCollection = db.collection("booking");
 
-    facility 
+    facility
       ? bookingCollection
-        .find({
-          email,
-          facility,
-        })
-        .toArray()
-        .then((result, error) => {
-          if (result) {
-            res.json(result);
-          } else {
-            res.status(400).json(error);
-          }
-        })
+          .find({
+            email,
+            facility,
+          })
+          .toArray()
+          .then((result, error) => {
+            if (result) {
+              res.json(result);
+            } else {
+              res.status(400).json(error);
+            }
+          })
       : bookingCollection
-        .find({
-          email
-        })
-        .toArray()
-        .then((result, error) => {
-          if (result) {
-            res.json(result);
-          } else {
-            res.status(400).json(error);
-          }
-        })
+          .find(
+            {
+              email,
+            },
+            { sort: [["date", -1]] }
+          )
+          .toArray()
+          .then((result, error) => {
+            if (result) {
+              res.json(result);
+            } else {
+              res.status(400).json(error);
+            }
+          });
   }
 });
 
