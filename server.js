@@ -13,23 +13,23 @@ const dateFns = require("date-fns");
 
 require("dotenv").config();
 
-// Heroku
-const uri = process.env.MONGODB_URI;
+// // Heroku
+// const uri = process.env.MONGODB_URI;
 
-mongoose.connect(uri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  useCreateIndex: true,
-  useFindAndModify: false,
-});
-
-// // Localhost
-// mongoose.connect("mongodb://localhost:27017/nusfitness", {
+// mongoose.connect(uri, {
 //   useNewUrlParser: true,
 //   useUnifiedTopology: true,
 //   useCreateIndex: true,
 //   useFindAndModify: false,
 // });
+
+// Localhost
+mongoose.connect("mongodb://localhost:27017/nusfitness", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  useCreateIndex: true,
+  useFindAndModify: false,
+});
 
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
@@ -54,10 +54,10 @@ const sessionConfig = {
   secret: "secret",
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: "mongodb://localhost:27017/nusfitness",
-    collectionName: "sessions",
-  }),
+  // store: MongoStore.create({
+  //   mongoUrl: "mongodb://localhost:27017/nusfitness",
+  //   collectionName: "sessions",
+  // }),
   cookie: {
     secure: false,
     maxAge: 30 * 1000 * 60 * 60 * 24,
