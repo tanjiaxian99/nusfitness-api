@@ -54,10 +54,10 @@ const sessionConfig = {
   secret: "secret",
   resave: false,
   saveUninitialized: false,
-  // store: MongoStore.create({
-  //   mongoUrl: "mongodb://localhost:27017/nusfitness",
-  //   collectionName: "sessions",
-  // }),
+  store: MongoStore.create({
+    mongoUrl: uri,
+    collectionName: "sessions",
+  }),
   cookie: {
     secure: false,
     maxAge: 30 * 1000 * 60 * 60 * 24,
