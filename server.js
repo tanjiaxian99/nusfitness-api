@@ -10,6 +10,7 @@ const fetch = require("node-fetch");
 const HTMLParser = require("node-html-parser");
 const cookie = require("cookie");
 const dateFns = require("date-fns");
+const wakeUpDyno = require("./wokeDyno.js");
 
 require("dotenv").config();
 
@@ -475,4 +476,6 @@ const updateTrafficCollection = async () => {
 };
 updateTrafficCollection();
 
-app.listen(process.env.PORT || 5000);
+app.listen(process.env.PORT || 5000, () =>
+  wakeUpDyno("https://salty-reaches-24995.herokuapp.com/")
+);
