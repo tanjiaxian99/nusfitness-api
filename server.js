@@ -109,10 +109,11 @@ app.post("/cancel", async (req, res) => {
     res.status(401).json({ success: false });
   } else {
     const email = req.user.email;
-    const { facility, date } = req.body;
+    const facility = req.body.facility;
+    const date = new Date(req.body.date);
 
     // Unable to cancel slot if it is 2 hours before the actual slot
-    const slotTime = dateFns.addHours(new Date(date), -2);
+    const slotTime = dateFns.addHours(date, -2);
     const currentTime = new Date().getTime();
     if (slotTime < currentTime) {
       res.status(403).json({ success: false });
@@ -140,7 +141,8 @@ app.post("/book", async (req, res) => {
     res.status(401).json({ success: false });
   } else {
     const bookingCollection = db.collection("booking");
-    const { facility, date } = req.body;
+    const facility = req.body.facility;
+    const date = new Date(req.body.date);
     const maxCapacity = 20;
 
     // Make sure count does not exceed max capacity in the event of multiple bookings
@@ -152,7 +154,7 @@ app.post("/book", async (req, res) => {
     if (count >= maxCapacity) {
       res.status(400).json({ success: false });
     } else {
-      const booking = { email: req.user.email, ...req.body };
+      const booking = { email: req.user.email, facility, date };
       bookingCollection.insertOne(booking, (error, result) => {
         if (error) {
           console.log(error);
@@ -165,22 +167,37 @@ app.post("/book", async (req, res) => {
   }
 });
 
-app.post("/slots", (req, res) => {
+app.post("/slots", async (req, res) => {
   const bookingCollection = db.collection("booking");
-  const { facility, date } = req.body;
-  bookingCollection.countDocuments(
-    {
-      facility,
-      date,
-    },
-    (error, result) => {
-      if (error) {
-        res.status(400).json(error);
-      } else {
-        res.json(result);
-      }
-    }
-  );
+  const now = new Date();
+  const facility = req.body.facility;
+  const startDate = new Date(req.body.date);
+  const endDate = dateFns.addDays(startDate, 3);
+  try {
+    const aggregate = await bookingCollection.aggregate([
+      {
+        $project: {
+          facility: 1,
+          date: 1,
+        },
+      },
+      {
+        $match: {
+          facility,
+          date: { $gte: startDate, $lt: endDate }, // Filter by date range
+        },
+      },
+      {
+        $group: {
+          _id: "$date",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+    res.json(await aggregate.toArray());
+  } catch (err) {
+    res.status(400).json(err);
+  }
 });
 
 app.post("/bookedSlots", (req, res) => {
