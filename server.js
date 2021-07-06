@@ -10,6 +10,7 @@ const fetch = require("node-fetch");
 const HTMLParser = require("node-html-parser");
 const cookie = require("cookie");
 const dateFns = require("date-fns");
+const telegram = require("./telegram_routes");
 
 require("dotenv").config();
 
@@ -76,6 +77,17 @@ passport.use(
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
+/** TELEGRAM HELPER METHODS */
+const getEmail = async (chatId) => {
+  const users = db.collection("users");
+  const user = await users.findOne({ chatId });
+  return user.email;
+};
+
+/** ROUTES */
+
+app.use("/telegram", telegram);
+
 app.get("/", (req, res) => {
   res.send("hello world!");
 });
@@ -101,36 +113,6 @@ app.post("/login", passport.authenticate("local"), (req, res) => {
 
 app.get("/logout", (req, res) => {
   req.logout();
-  res.status(200).json({ success: true });
-});
-
-// Add chatId to users collection
-app.post("/telegram", (req, res) => {
-  const name = req.body.name;
-  const chatId = parseInt(req.body.chatId);
-
-  // Send message to telegram bot
-  fetch(`https://api.telegram.org/bot${process.env.TOKEN}/sendMessage`, {
-    method: "post",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: `Welcome to NUSFitness ${name}! Your connection to @NUSFitness_Bot has been successful!`,
-      disable_notification: false,
-    }),
-  }).catch((err) => res.status(400).json(err));
-
-  // Update database with chatId
-  const users = db.collection("users");
-  users
-    .updateOne(
-      { email: req.user.email },
-      {
-        $set: { chatId },
-      }
-    )
-    .catch((err) => res.status(400).json(err));
-
   res.status(200).json({ success: true });
 });
 
@@ -230,13 +212,22 @@ app.post("/slots", async (req, res) => {
   }
 });
 
-app.post("/bookedSlots", (req, res) => {
-  if (!req.isAuthenticated()) {
+app.post("/bookedSlots", async (req, res) => {
+  if (!req.isAuthenticated() && !req.body.chatId) {
     res.status(401).json("Unauthorized");
   } else {
-    const email = req.user.email;
-    const facility = req.body.facility;
+    let email;
+    let facility;
     const bookingCollection = db.collection("booking");
+
+    // Viewing booked slots via website or telegram
+    if (req.isAuthenticated()) {
+      email = req.user.email;
+      facility = req.body.facility;
+    } else {
+      const chatId = parseInt(req.body.chatId);
+      email = await getEmail(chatId);
+    }
 
     facility
       ? bookingCollection
