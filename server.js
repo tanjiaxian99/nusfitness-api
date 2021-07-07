@@ -183,8 +183,11 @@ app.post("/slots", async (req, res) => {
   const bookingCollection = db.collection("booking");
   const now = new Date();
   const facility = req.body.facility;
-  const startDate = new Date(req.body.date);
-  const endDate = dateFns.addDays(startDate, 3);
+  const startDate = new Date(req.body.startDate);
+  const endDate = req.body.endDate
+    ? new Date(req.body.endDate)
+    : new Date(req.body.startDate);
+
   try {
     const aggregate = await bookingCollection.aggregate([
       {
