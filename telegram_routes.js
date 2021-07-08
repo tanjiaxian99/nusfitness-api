@@ -47,4 +47,57 @@ router.post("/isLoggedIn", (req, res) => {
   });
 });
 
+router.post("/updateMenus", async (req, res) => {
+  const chatId = parseInt(req.body.chatId);
+  const currentMenu = req.body.currentMenu;
+  const sessions = db.collection("telegram-sessions");
+
+  const user = await sessions.findOne({ chatId });
+  if (!user) {
+    res.status(400).json({ success: false });
+  }
+
+  let menus = user.menus;
+  if (!menus || currentMenu === "Start") {
+    menus = [currentMenu];
+  } else if (menus[menus.length - 2] === currentMenu) {
+    menus.pop();
+  } else if (menus[menus.length - 3] === currentMenu) {
+    menus.pop();
+    menus.pop();
+  } else {
+    menus.push(currentMenu);
+  }
+
+  try {
+    await sessions.updateOne(
+      { chatId },
+      {
+        $set: { menus },
+      },
+      { upsert: true }
+    );
+    res.status(200).json({ success: true });
+  } catch (err) {
+    res.status(400).json(err);
+  }
+});
+
+router.post("/getPreviousMenu", async (req, res) => {
+  const chatId = parseInt(req.body.chatId);
+  const skips = req.body.skips; // number of menu elements to skip
+  const sessions = db.collection("telegram-sessions");
+  const user = await sessions.findOne({ chatId });
+
+  if (!user) {
+    res.status(400).json({ previousMenu: null });
+  } else if (user.menus.length < 2) {
+    res.status(400).json({ previousMenu: null });
+  } else {
+    res.status(200).json({
+      previousMenu: user.menus[user.menus.length - skips - 1],
+    });
+  }
+});
+
 module.exports = router;

@@ -149,13 +149,14 @@ app.post("/cancel", async (req, res) => {
 });
 
 app.post("/book", async (req, res) => {
-  if (!req.isAuthenticated()) {
+  if (!req.isAuthenticated() && !req.body.chatId) {
     res.status(401).json({ success: false });
   } else {
     const bookingCollection = db.collection("booking");
     const facility = req.body.facility;
     const date = new Date(req.body.date);
     const maxCapacity = 20;
+    let email;
 
     // Make sure count does not exceed max capacity in the event of multiple bookings
     const count = await bookingCollection.countDocuments({
@@ -163,10 +164,18 @@ app.post("/book", async (req, res) => {
       date,
     });
 
+    // Retrieve email
+    if (req.isAuthenticated()) {
+      email = req.user.email;
+    } else {
+      const chatId = parseInt(req.body.chatId);
+      email = await getEmail(chatId);
+    }
+
     if (count >= maxCapacity) {
       res.status(400).json({ success: false });
     } else {
-      const booking = { email: req.user.email, facility, date };
+      const booking = { email, facility, date };
       bookingCollection.insertOne(booking, (error, result) => {
         if (error) {
           console.log(error);
@@ -219,14 +228,13 @@ app.post("/bookedSlots", async (req, res) => {
   if (!req.isAuthenticated() && !req.body.chatId) {
     res.status(401).json("Unauthorized");
   } else {
+    const facility = req.body.facility;
     let email;
-    let facility;
     const bookingCollection = db.collection("booking");
 
-    // Viewing booked slots via website or telegram
+    // Retrieve email
     if (req.isAuthenticated()) {
       email = req.user.email;
-      facility = req.body.facility;
     } else {
       const chatId = parseInt(req.body.chatId);
       email = await getEmail(chatId);
