@@ -60,9 +60,15 @@ router.post("/updateMenus", async (req, res) => {
   let menus = user.menus;
   if (!menus || currentMenu === "Start") {
     menus = [currentMenu];
+  } else if (menus[menus.length - 1] === currentMenu) {
+    // Refreshed menu
+    res.status(200).json({ success: true });
+    return;
   } else if (menus[menus.length - 2] === currentMenu) {
+    // Back to previous menu
     menus.pop();
   } else if (menus[menus.length - 3] === currentMenu) {
+    // Back to two menus before
     menus.pop();
     menus.pop();
   } else {
