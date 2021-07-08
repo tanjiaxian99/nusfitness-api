@@ -117,10 +117,10 @@ app.get("/logout", (req, res) => {
 });
 
 app.post("/cancel", async (req, res) => {
-  if (!req.isAuthenticated()) {
+  if (!req.isAuthenticated() && !req.body.chatId) {
     res.status(401).json({ success: false });
   } else {
-    const email = req.user.email;
+    let email;
     const facility = req.body.facility;
     const date = new Date(req.body.date);
 
@@ -130,6 +130,14 @@ app.post("/cancel", async (req, res) => {
     if (slotTime < currentTime) {
       res.status(403).json({ success: false });
       return;
+    }
+
+    // Retrieve email
+    if (req.isAuthenticated()) {
+      email = req.user.email;
+    } else {
+      const chatId = parseInt(req.body.chatId);
+      email = await getEmail(chatId);
     }
 
     // Slot can be cancelled
