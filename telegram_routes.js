@@ -16,7 +16,7 @@ router.post("/login", (req, res) => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       chat_id: chatId,
-      text: `Welcome to NUSFitness ${name}! Your connection to @NUSFitness_Bot has been successful!`,
+      text: `Welcome to NUSFitness ${name}! Your connection to @NUSFitness_Bot has been successful! Press /start to begin!`,
       disable_notification: false,
     }),
   }).catch((err) => res.status(400).json(err));
@@ -62,17 +62,15 @@ router.post("/updateMenus", async (req, res) => {
   let menus = user.menus;
   if (!menus || currentMenu === "Start") {
     menus = [currentMenu];
-  } else if (menus[menus.length - 1] === currentMenu) {
-    // Refreshed menu
-    res.status(200).json({ success: true });
-    return;
-  } else if (menus[menus.length - 2] === currentMenu) {
-    // Back to previous menu
-    menus.pop();
-  } else if (menus[menus.length - 3] === currentMenu) {
-    // Back to two menus before
-    menus.pop();
-    menus.pop();
+  } else if (menus.includes(currentMenu)) {
+    if (menus[menus.length - 1] === currentMenu) {
+      // Refreshed menu
+      res.status(200).json({ success: true });
+      return;
+    } else {
+      const index = menus.findIndex((e) => e === currentMenu);
+      menus = menus.slice(0, index + 1);
+    }
   } else {
     menus.push(currentMenu);
   }
