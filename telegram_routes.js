@@ -52,9 +52,11 @@ router.post("/updateMenus", async (req, res) => {
   const currentMenu = req.body.currentMenu;
   const sessions = db.collection("telegram-sessions");
 
-  const user = await sessions.findOne({ chatId });
+  let user = await sessions.findOne({ chatId });
   if (!user) {
-    res.status(400).json({ success: false });
+    // Create new session if the user doesn't exists
+    const res = await sessions.insertOne({ chatId });
+    user = res.ops[0];
   }
 
   let menus = user.menus;
