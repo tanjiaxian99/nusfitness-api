@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const fetch = require("node-fetch");
 const mongoose = require("mongoose");
+const requestTraffic = require("./traffic");
 
 const db = mongoose.connection;
 
@@ -103,6 +104,15 @@ router.post("/getPreviousMenu", async (req, res) => {
     res.status(200).json({
       previousMenu: user.menus[user.menus.length - skips - 1],
     });
+  }
+});
+
+router.get("/currentTraffic", async (req, res) => {
+  const traffic = await requestTraffic();
+  if (traffic) {
+    res.status(200).send(traffic);
+  } else {
+    res.status(400);
   }
 });
 
