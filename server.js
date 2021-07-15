@@ -316,7 +316,7 @@ app.post("/cancel", async (req, res) => {
  *       "success": false
  *     }
  *
- * @apiError DocumentNotInserted The slot cannot be added to the collection
+ * @apiError MongoError Error raised by MongoDB
  *
  * @apiErrorExample Error-Response:
  *     HTTP/1.1 404 Not Found
@@ -397,7 +397,7 @@ app.post("/book", async (req, res) => {
  *       },
  *     ]
  *
- * @apiError DocumentNotInserted The slot cannot be added to the collection
+ * @apiError CollectionNotAggregated The slots cannot be aggregated
  *
  * @apiErrorExample Error-Response:
  *     HTTP/1.1 404 Not Found
@@ -486,7 +486,7 @@ app.post("/slots", async (req, res) => {
  *       "success": false
  *     }
  *
- * @apiError DocumentNotInserted The slot cannot be added to the collection
+ * @apiError MongoError Error raised by MongoDB
  *
  * @apiErrorExample Error-Response:
  *     HTTP/1.1 404 Not Found
@@ -547,6 +547,59 @@ app.post("/bookedSlots", async (req, res) => {
   }
 });
 
+/**
+ * @api {post} /traffic Historical traffic
+ * @apiName PostTraffic
+ * @apiGroup Traffic
+ *
+ * @apiParam {Number} facility Number associated with selected facility
+ * @apiParam {Object} dateFilter Date range to filter by
+ * @apiParam {Number[]} dayFilter Days to filter by
+ *
+ * @apiSuccess {Object[]} slots Array of slots
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 Ok
+ *     [
+ *       {
+ *         "_id": {
+ *           "hour": "17",
+ *           "minute": "40"
+ *         },
+ *         "date": "2021-07-15T09:40:00.000Z",
+ *         "count": 33
+ *       },
+ *       {
+ *         "_id": {
+ *           "hour": "17",
+ *           "minute": "45"
+ *         },
+ *         "date": "2021-07-15T09:45:00.000Z",
+ *         "count": 35
+ *       },
+ *       {
+ *         "_id": {
+ *           "hour": "17",
+ *           "minute": "50"
+ *         },
+ *       "date": "2021-07-15T09:50:00.000Z",
+ *       "count": 34
+ *       },
+ *     ]
+ *
+ * @apiError MongoError Error raised by MongoDB
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "name": "MongoError",
+ *       "err": "E11000 duplicate key error index: test.test.$country_1  dup key: { : \"XYZ\" }",
+ *       "code": 11000,
+ *       "n": 0,
+ *       "connectionId":10706,
+ *       "ok":1
+ *     }
+ */
 app.post("/traffic", async (req, res) => {
   const trafficCollection = db.collection("traffic");
   const facility = req.body.facility;
@@ -616,7 +669,7 @@ app.post("/traffic", async (req, res) => {
     ]);
     res.json(await aggregate.toArray());
   } catch (err) {
-    res.status(400).json(err);
+    res.status(404).json(err);
   }
 });
 
