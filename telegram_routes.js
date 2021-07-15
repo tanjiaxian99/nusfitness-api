@@ -6,7 +6,41 @@ const requestTraffic = require("./traffic");
 
 const db = mongoose.connection;
 
-// Add chatId to users collection
+/**
+ * @api {post} /login Add Users ChatId
+ * @apiName PostLogin
+ * @apiGroup Telegram
+ *
+ * @apiParam {String} name Users Telegram name
+ * @apiParam {String} chatId Users unique Telegram ChatId
+ *
+ * @apiSuccess {Object} success Success status of logging in
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 Ok
+ *     {
+ *       "success": true
+ *     }
+ *
+ * @apiError UnableToFetch Error raised by Fetch
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     TypeError: Failed to fetch
+ *
+ * @apiError MongoError Error raised by MongoDB
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "name": "MongoError",
+ *       "err": "E11000 duplicate key error index: test.test.$country_1  dup key: { : \"XYZ\" }",
+ *       "code": 11000,
+ *       "n": 0,
+ *       "connectionId":10706,
+ *       "ok":1
+ *     }
+ */
 router.post("/login", (req, res) => {
   const name = req.body.name;
   const chatId = parseInt(req.body.chatId);
@@ -20,7 +54,7 @@ router.post("/login", (req, res) => {
       text: `Welcome to NUSFitness ${name}! Your connection to @NUSFitness_Bot has been successful! Press /start to begin!`,
       disable_notification: false,
     }),
-  }).catch((err) => res.status(400).json(err));
+  }).catch((err) => res.status(404).json(err));
 
   // Update database with chatId
   const users = db.collection("users");
@@ -31,11 +65,39 @@ router.post("/login", (req, res) => {
         $set: { chatId },
       }
     )
-    .catch((err) => res.status(400).json(err));
+    .catch((err) => res.status(404).json(err));
 
   res.status(200).json({ success: true });
 });
 
+/**
+ * @api {post} /isLoggedIn Users Telegram logged in status
+ * @apiName PostIsLoggedIn
+ * @apiGroup Telegram
+ *
+ * @apiParam {String} chatId Users unique Telegram ChatId
+ *
+ * @apiSuccess {Object} success Users logged in status
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 Ok
+ *     {
+ *       "success": true
+ *     }
+ *
+ * @apiError MongoError Error raised by MongoDB
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "name": "MongoError",
+ *       "err": "E11000 duplicate key error index: test.test.$country_1  dup key: { : \"XYZ\" }",
+ *       "code": 11000,
+ *       "n": 0,
+ *       "connectionId":10706,
+ *       "ok":1
+ *     }
+ */
 router.post("/isLoggedIn", (req, res) => {
   const chatId = parseInt(req.body.chatId);
   const users = db.collection("users");
@@ -43,11 +105,40 @@ router.post("/isLoggedIn", (req, res) => {
     if (result) {
       res.status(200).json({ success: true });
     } else {
-      res.status(400).json({ success: false });
+      res.status(400).json(error);
     }
   });
 });
 
+/**
+ * @api {post} /updateMenus Update Users visited menus
+ * @apiName PostUpdateMenus
+ * @apiGroup Telegram
+ *
+ * @apiParam {String} chatId Users unique Telegram ChatId
+ * @apiParam {String} currentMenu Users current selected menu
+ *
+ * @apiSuccess {Object} success Success status updating users visited menus
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 Ok
+ *     {
+ *       "success": true
+ *     }
+ *
+ * @apiError MongoError Error raised by MongoDB
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "name": "MongoError",
+ *       "err": "E11000 duplicate key error index: test.test.$country_1  dup key: { : \"XYZ\" }",
+ *       "code": 11000,
+ *       "n": 0,
+ *       "connectionId":10706,
+ *       "ok":1
+ *     }
+ */
 router.post("/updateMenus", async (req, res) => {
   const chatId = parseInt(req.body.chatId);
   const currentMenu = req.body.currentMenu;
@@ -90,6 +181,39 @@ router.post("/updateMenus", async (req, res) => {
   }
 });
 
+/**
+ * @api {post} /getPreviousMenu Get users previous menu
+ * @apiName PostGetPreviousMenu
+ * @apiGroup Telegram
+ *
+ * @apiParam {String} chatId Users unique Telegram ChatId
+ * @apiParam {Number} skips Number of menus to traverse back to
+ *
+ * @apiSuccess {Object} previousMenu Previous menu that the user visited
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 Ok
+ *     {
+ *       "previousMenu": "MakeAndCancel"
+ *     }
+ *
+ * @apiError UserNotFound The user of the given chatId cannot be found
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "previousMenu": null
+ *     }
+ *
+ * @apiError ArrayOutOfBounds Number of skips exceeds the length of the menu array
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "previousMenu": null
+ *     }
+ *
+ */
 router.post("/getPreviousMenu", async (req, res) => {
   const chatId = parseInt(req.body.chatId);
   const skips = req.body.skips; // number of menu elements to skip
@@ -107,6 +231,22 @@ router.post("/getPreviousMenu", async (req, res) => {
   }
 });
 
+/**
+ * @api {get} /currentTraffic Get current traffic
+ * @apiName GetCurrentTraffic
+ * @apiGroup Telegram
+ *
+ * @apiSuccess {Number[]} traffic Traffic of all facilities at the time of request
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 Ok
+ *     [33, 2, 6, 7, 36, 11]
+ *
+ * @apiError TrafficNotFound The current traffic cannot be retrieved
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ */
 router.get("/currentTraffic", async (req, res) => {
   const traffic = await requestTraffic();
   if (traffic) {

@@ -211,12 +211,25 @@ app.get("/isLoggedIn", (req, res) => {
  * @apiParam {String} facility Facility of the slot that is going to be cancelled
  * @apiParam {String} date Date of the slot
  *
- * @apiSuccess {Boolean} success Success of cancelling the slot
+ * @apiSuccess {Object} success Success status of cancelling the slot
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
  *     {
  *       "success": true
+ *     }
+ *
+ * @apiError MongoError Error raised by MongoDB
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "name": "MongoError",
+ *       "err": "E11000 duplicate key error index: test.test.$country_1  dup key: { : \"XYZ\" }",
+ *       "code": 11000,
+ *       "n": 0,
+ *       "connectionId":10706,
+ *       "ok":1
  *     }
  *
  * @apiError Unauthorized The given email and password is unauthorized to login
@@ -231,14 +244,6 @@ app.get("/isLoggedIn", (req, res) => {
  *
  * @apiErrorExample Error-Response:
  *     HTTP/1.1 403 Forbidden
- *     {
- *       "success": false
- *     }
- *
- * @apiError DocumentNotFound The slot to be cancelled cannot be found
- *
- * @apiErrorExample Error-Response:
- *     HTTP/1.1 404 Not Found
  *     {
  *       "success": false
  *     }
@@ -276,7 +281,7 @@ app.post("/cancel", async (req, res) => {
     });
     if (result.deletedCount === 0) {
       console.log("No documents matched the query. Deleted 0 documents.");
-      res.status(404).json({ success: false });
+      res.status(400).json({ success: false });
     } else {
       res.status(200).json({ success: true });
     }
@@ -292,12 +297,25 @@ app.post("/cancel", async (req, res) => {
  * @apiParam {String} facility Facility of the slot that is going to be booked
  * @apiParam {String} date Date of the slot
  *
- * @apiSuccess {Boolean} success Success of cancelling the slot
+ * @apiSuccess {Object} success Success status of cancelling the slot
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
  *     {
  *       "success": true
+ *     }
+ *
+ * @apiError MongoError Error raised by MongoDB
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "name": "MongoError",
+ *       "err": "E11000 duplicate key error index: test.test.$country_1  dup key: { : \"XYZ\" }",
+ *       "code": 11000,
+ *       "n": 0,
+ *       "connectionId":10706,
+ *       "ok":1
  *     }
  *
  * @apiError Unauthorized The given email and password is unauthorized to login
@@ -314,19 +332,6 @@ app.post("/cancel", async (req, res) => {
  *     HTTP/1.1 403 Forbidden
  *     {
  *       "success": false
- *     }
- *
- * @apiError MongoError Error raised by MongoDB
- *
- * @apiErrorExample Error-Response:
- *     HTTP/1.1 404 Not Found
- *     {
- *       "name": "MongoError",
- *       "err": "E11000 duplicate key error index: test.test.$country_1  dup key: { : \"XYZ\" }",
- *       "code": 11000,
- *       "n": 0,
- *       "connectionId":10706,
- *       "ok":1
  *     }
  */
 app.post("/book", async (req, res) => {
@@ -360,7 +365,7 @@ app.post("/book", async (req, res) => {
       bookingCollection.insertOne(booking, (error, result) => {
         if (error) {
           console.log(error);
-          res.status(404).json(error);
+          res.status(400).json(error);
         } else {
           res.status(200).json({ success: true });
         }
@@ -397,10 +402,10 @@ app.post("/book", async (req, res) => {
  *       },
  *     ]
  *
- * @apiError CollectionNotAggregated The slots cannot be aggregated
+ * @apiError MongoError Error raised by MongoDB
  *
  * @apiErrorExample Error-Response:
- *     HTTP/1.1 404 Not Found
+ *     HTTP/1.1 400 Bad Request
  *     {
  *       "name": "MongoError",
  *       "err": "E11000 duplicate key error index: test.test.$country_1  dup key: { : \"XYZ\" }",
@@ -442,7 +447,7 @@ app.post("/slots", async (req, res) => {
     ]);
     res.json(await aggregate.toArray());
   } catch (err) {
-    res.status(404).json(err);
+    res.status(400).json(err);
   }
 });
 
@@ -478,18 +483,11 @@ app.post("/slots", async (req, res) => {
  *         "date": "2021-07-09T08:00:00.000Z"
  *       }
  *     ]
- * @apiError Unauthorized The given email and password is unauthorized to login
- *
- * @apiErrorExample Error-Response:
- *     HTTP/1.1 401 Unauthorized
- *     {
- *       "success": false
- *     }
  *
  * @apiError MongoError Error raised by MongoDB
  *
  * @apiErrorExample Error-Response:
- *     HTTP/1.1 404 Not Found
+ *     HTTP/1.1 400 Bad Request
  *     {
  *       "name": "MongoError",
  *       "err": "E11000 duplicate key error index: test.test.$country_1  dup key: { : \"XYZ\" }",
@@ -497,6 +495,14 @@ app.post("/slots", async (req, res) => {
  *       "n": 0,
  *       "connectionId":10706,
  *       "ok":1
+ *     }
+ *
+ * @apiError Unauthorized The given email and password is unauthorized to login
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *       "success": false
  *     }
  */
 app.post("/bookedSlots", async (req, res) => {
@@ -526,7 +532,7 @@ app.post("/bookedSlots", async (req, res) => {
             if (result) {
               res.json(result);
             } else {
-              res.status(404).json(error);
+              res.status(400).json(error);
             }
           })
       : bookingCollection
@@ -541,7 +547,7 @@ app.post("/bookedSlots", async (req, res) => {
             if (result) {
               res.json(result);
             } else {
-              res.status(404).json(error);
+              res.status(400).json(error);
             }
           });
   }
@@ -590,7 +596,7 @@ app.post("/bookedSlots", async (req, res) => {
  * @apiError MongoError Error raised by MongoDB
  *
  * @apiErrorExample Error-Response:
- *     HTTP/1.1 404 Not Found
+ *     HTTP/1.1 400 Bad Request
  *     {
  *       "name": "MongoError",
  *       "err": "E11000 duplicate key error index: test.test.$country_1  dup key: { : \"XYZ\" }",
@@ -669,7 +675,7 @@ app.post("/traffic", async (req, res) => {
     ]);
     res.json(await aggregate.toArray());
   } catch (err) {
-    res.status(404).json(err);
+    res.status(400).json(err);
   }
 });
 
