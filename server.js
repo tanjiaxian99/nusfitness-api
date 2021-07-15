@@ -184,6 +184,65 @@ app.get("/logout", (req, res) => {
   res.status(200).json({ success: true });
 });
 
+/**
+ * @api {get} /isLoggedIn Users logged in status
+ * @apiName GetIsLoggedIn
+ * @apiGroup Registration/Login
+ *
+ * @apiSuccess {Boolean} authenticated Users logged in status
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 Ok
+ *     {
+ *       "authenticated": true
+ *     }
+ */
+app.get("/isLoggedIn", (req, res) => {
+  const authenticated = req.isAuthenticated();
+  res.json({ authenticated });
+});
+
+/**
+ * @api {post} /cancel Delete booked slot
+ * @apiName PostCancel
+ * @apiGroup Booking
+ *
+ * @apiParam {String} chatId Users Telegram ChatId
+ * @apiParam {String} facility Facility of the slot that is going to be cancelled
+ * @apiParam {String} date Date of the slot
+ *
+ * @apiSuccess {Boolean} success Success of cancelling the slot
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 Ok
+ *     {
+ *       "success": true
+ *     }
+ *
+ * @apiError Unauthorized The given email and password is unauthorized to login
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *       "success": false
+ *     }
+ *
+ * @apiError TimeElapsed The slot's time is within the 2 hours cancellation window and cannot be cancelled
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 403 Forbidden
+ *     {
+ *       "success": false
+ *     }
+ *
+ * @apiError DocumentNotFound The slot to be cancelled cannot be found
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "success": false
+ *     }
+ */
 app.post("/cancel", async (req, res) => {
   if (!req.isAuthenticated() && !req.body.chatId) {
     res.status(401).json({ success: false });
@@ -224,6 +283,52 @@ app.post("/cancel", async (req, res) => {
   }
 });
 
+/**
+ * @api {post} /book Book slot
+ * @apiName PostBook
+ * @apiGroup Booking
+ *
+ * @apiParam {String} chatId Users Telegram ChatId
+ * @apiParam {String} facility Facility of the slot that is going to be booked
+ * @apiParam {String} date Date of the slot
+ *
+ * @apiSuccess {Boolean} success Success of cancelling the slot
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 Ok
+ *     {
+ *       "success": true
+ *     }
+ *
+ * @apiError Unauthorized The given email and password is unauthorized to login
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *       "success": false
+ *     }
+ *
+ * @apiError SlotFull The slot has reached maximum capacity and cannot be booked
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 403 Forbidden
+ *     {
+ *       "success": false
+ *     }
+ *
+ * @apiError DocumentNotInserted The slot cannot be added to the collection
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "name": "MongoError",
+ *       "err": "E11000 duplicate key error index: test.test.$country_1  dup key: { : \"XYZ\" }",
+ *       "code": 11000,
+ *       "n": 0,
+ *       "connectionId":10706,
+ *       "ok":1
+ *     }
+ */
 app.post("/book", async (req, res) => {
   if (!req.isAuthenticated() && !req.body.chatId) {
     res.status(401).json({ success: false });
@@ -249,13 +354,13 @@ app.post("/book", async (req, res) => {
     }
 
     if (count >= maxCapacity) {
-      res.status(400).json({ success: false });
+      res.status(403).json({ success: false });
     } else {
       const booking = { email, facility, date };
       bookingCollection.insertOne(booking, (error, result) => {
         if (error) {
           console.log(error);
-          res.status(400).json(error);
+          res.status(404).json(error);
         } else {
           res.status(200).json({ success: true });
         }
@@ -264,6 +369,47 @@ app.post("/book", async (req, res) => {
   }
 });
 
+/**
+ * @api {post} /slots Number of booked slots
+ * @apiName PostSlots
+ * @apiGroup Booking
+ *
+ * @apiParam {String} facility Facility of the slots
+ * @apiParam {String} startDate The start date to start searching for the slots
+ * @apiParam {String} endDate The end date to stop searching for the slots
+ *
+ * @apiSuccess {Object[]} slots Array of slots
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 Ok
+ *     [
+ *       {
+ *         "_id": "2021-07-09T08:00:00.000Z",
+ *         "count": 1
+ *       },
+ *       {
+ *         "_id": "2021-07-05T23:30:00.000Z",
+ *         "count": 2
+ *       },
+ *       {
+ *         "_id": "2021-07-08T05:00:00.000Z",
+ *         "count": 4
+ *       },
+ *     ]
+ *
+ * @apiError DocumentNotInserted The slot cannot be added to the collection
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "name": "MongoError",
+ *       "err": "E11000 duplicate key error index: test.test.$country_1  dup key: { : \"XYZ\" }",
+ *       "code": 11000,
+ *       "n": 0,
+ *       "connectionId":10706,
+ *       "ok":1
+ *     }
+ */
 app.post("/slots", async (req, res) => {
   const bookingCollection = db.collection("booking");
   const now = new Date();
@@ -296,10 +442,63 @@ app.post("/slots", async (req, res) => {
     ]);
     res.json(await aggregate.toArray());
   } catch (err) {
-    res.status(400).json(err);
+    res.status(404).json(err);
   }
 });
 
+/**
+ * @api {post} /bookedSlots Users booked slots
+ * @apiName PostBookedSlots
+ * @apiGroup Booking
+ *
+ * @apiParam {String} chatId Users Telegram ChatId
+ * @apiParam {String} facility Facility of the booked slots
+ *
+ * @apiSuccess {Object[]} slots Array of slots
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 Ok
+ *     [
+ *       {
+ *         "_id": "60e1e713f72ceb4b84061666",
+ *         "email": "e0000000X@u.nus.edu",
+ *         "facility": "Kent Ridge Swimming Pool",
+ *         "date": "2021-07-05T23:30:00.000Z"
+ *       },
+ *       {
+ *         "_id": "60e495cb14d4dc01fcc2e767",
+ *         "email": "e0000000X@u.nus.edu",
+ *         "facility": "University Town Gym",
+ *         "date": "2021-07-08T03:00:00.000Z"
+ *       },
+ *       {
+ *         "_id": "60e542cf1c7c7a2540ad0e57",
+ *         "email": "e0000000X@u.nus.edu",
+ *         "facility": "University Sports Centre Gym",
+ *         "date": "2021-07-09T08:00:00.000Z"
+ *       }
+ *     ]
+ * @apiError Unauthorized The given email and password is unauthorized to login
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *       "success": false
+ *     }
+ *
+ * @apiError DocumentNotInserted The slot cannot be added to the collection
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "name": "MongoError",
+ *       "err": "E11000 duplicate key error index: test.test.$country_1  dup key: { : \"XYZ\" }",
+ *       "code": 11000,
+ *       "n": 0,
+ *       "connectionId":10706,
+ *       "ok":1
+ *     }
+ */
 app.post("/bookedSlots", async (req, res) => {
   if (!req.isAuthenticated() && !req.body.chatId) {
     res.status(401).json("Unauthorized");
@@ -327,7 +526,7 @@ app.post("/bookedSlots", async (req, res) => {
             if (result) {
               res.json(result);
             } else {
-              res.status(400).json(error);
+              res.status(404).json(error);
             }
           })
       : bookingCollection
@@ -342,15 +541,10 @@ app.post("/bookedSlots", async (req, res) => {
             if (result) {
               res.json(result);
             } else {
-              res.status(400).json(error);
+              res.status(404).json(error);
             }
           });
   }
-});
-
-app.get("/isLoggedIn", (req, res) => {
-  const authenticated = req.isAuthenticated();
-  res.json({ authenticated });
 });
 
 app.post("/traffic", async (req, res) => {
