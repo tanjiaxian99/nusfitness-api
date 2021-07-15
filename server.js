@@ -6,10 +6,9 @@ const LocalStrategy = require("passport-local");
 const MongoStore = require("connect-mongo");
 const User = require("./models/user");
 const cors = require("cors");
-const fetch = require("node-fetch");
-const HTMLParser = require("node-html-parser");
-const cookie = require("cookie");
 const dateFns = require("date-fns");
+const telegram = require("./telegram_routes");
+const requestTraffic = require("./traffic");
 
 require("dotenv").config();
 
@@ -76,6 +75,17 @@ passport.use(
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
+/** TELEGRAM HELPER METHODS */
+const getEmail = async (chatId) => {
+  const users = db.collection("users");
+  const user = await users.findOne({ chatId });
+  return user.email;
+};
+
+/** ROUTES */
+
+app.use("/telegram", telegram);
+
 app.get("/", (req, res) => {
   res.send("hello world!");
 });
@@ -105,10 +115,10 @@ app.get("/logout", (req, res) => {
 });
 
 app.post("/cancel", async (req, res) => {
-  if (!req.isAuthenticated()) {
+  if (!req.isAuthenticated() && !req.body.chatId) {
     res.status(401).json({ success: false });
   } else {
-    const email = req.user.email;
+    let email;
     const facility = req.body.facility;
     const date = new Date(req.body.date);
 
@@ -118,6 +128,14 @@ app.post("/cancel", async (req, res) => {
     if (slotTime < currentTime) {
       res.status(403).json({ success: false });
       return;
+    }
+
+    // Retrieve email
+    if (req.isAuthenticated()) {
+      email = req.user.email;
+    } else {
+      const chatId = parseInt(req.body.chatId);
+      email = await getEmail(chatId);
     }
 
     // Slot can be cancelled
@@ -137,13 +155,14 @@ app.post("/cancel", async (req, res) => {
 });
 
 app.post("/book", async (req, res) => {
-  if (!req.isAuthenticated()) {
+  if (!req.isAuthenticated() && !req.body.chatId) {
     res.status(401).json({ success: false });
   } else {
     const bookingCollection = db.collection("booking");
     const facility = req.body.facility;
     const date = new Date(req.body.date);
     const maxCapacity = 20;
+    let email;
 
     // Make sure count does not exceed max capacity in the event of multiple bookings
     const count = await bookingCollection.countDocuments({
@@ -151,10 +170,18 @@ app.post("/book", async (req, res) => {
       date,
     });
 
+    // Retrieve email
+    if (req.isAuthenticated()) {
+      email = req.user.email;
+    } else {
+      const chatId = parseInt(req.body.chatId);
+      email = await getEmail(chatId);
+    }
+
     if (count >= maxCapacity) {
       res.status(400).json({ success: false });
     } else {
-      const booking = { email: req.user.email, facility, date };
+      const booking = { email, facility, date };
       bookingCollection.insertOne(booking, (error, result) => {
         if (error) {
           console.log(error);
@@ -171,8 +198,11 @@ app.post("/slots", async (req, res) => {
   const bookingCollection = db.collection("booking");
   const now = new Date();
   const facility = req.body.facility;
-  const startDate = new Date(req.body.date);
-  const endDate = dateFns.addDays(startDate, 3);
+  const startDate = new Date(req.body.startDate);
+  const endDate = req.body.endDate
+    ? new Date(req.body.endDate)
+    : new Date(req.body.startDate);
+
   try {
     const aggregate = await bookingCollection.aggregate([
       {
@@ -200,13 +230,21 @@ app.post("/slots", async (req, res) => {
   }
 });
 
-app.post("/bookedSlots", (req, res) => {
-  if (!req.isAuthenticated()) {
+app.post("/bookedSlots", async (req, res) => {
+  if (!req.isAuthenticated() && !req.body.chatId) {
     res.status(401).json("Unauthorized");
   } else {
-    const email = req.user.email;
     const facility = req.body.facility;
+    let email;
     const bookingCollection = db.collection("booking");
+
+    // Retrieve email
+    if (req.isAuthenticated()) {
+      email = req.user.email;
+    } else {
+      const chatId = parseInt(req.body.chatId);
+      email = await getEmail(chatId);
+    }
 
     facility
       ? bookingCollection
@@ -317,144 +355,6 @@ app.post("/traffic", async (req, res) => {
     res.status(400).json(err);
   }
 });
-
-// Request for pool/gym traffic
-const requestTraffic = async () => {
-  // Retrieve nuspw cookie
-  let res = await fetch(
-    "https://reboks.nus.edu.sg/nus_public_web/public/auth",
-    {
-      method: "get",
-    }
-  );
-  const nuspwCookie = res.headers.get("set-cookie");
-
-  // Retrieve SAMLRequest URL
-  res = await fetch(
-    "https://reboks.nus.edu.sg/nus_saml_provider/public/index.php/adfs/auth",
-    {
-      method: "get",
-      referrer:
-        "https://reboks.nus.edu.sg/nus_public_web/public/auth?redirect=%2Fnus_public_web%2Fpublic%2Fprofile%2Fbuypass%2Fgym",
-      credentials: "include",
-    }
-  );
-  const SAMLrequest = res.url;
-
-  // Send login data and retrieve MSISLoopDetectionCookie
-  res = await fetch(SAMLrequest, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      UserName: process.env.NUSNETID,
-      Password: process.env.PASSWORD,
-      AuthMethod: "FormsAuthentication",
-    }),
-    credentials: "include",
-    redirect: "manual",
-  });
-  const MSISLoopDetectionCookie = res.headers.get("set-cookie");
-
-  // Retrieve SAMLResponse
-  res = await fetch(SAMLrequest, {
-    method: "get",
-    headers: {
-      cookie: MSISLoopDetectionCookie,
-    },
-    credentials: "include",
-  });
-  let root = HTMLParser.parse(await res.text());
-  const SAMLResponse =
-    root.querySelector("input[type=hidden]").attributes.value;
-
-  // Send SAMLResponse and retrieve SimpleSAML and SimpleSAMLAuthToken cookies
-  res = await fetch(
-    "https://reboks.nus.edu.sg/nus_saml_provider/public/saml/module.php/saml/sp/saml2-acs.php/reboks",
-    {
-      method: "post",
-      body: new URLSearchParams({
-        SAMLResponse: SAMLResponse,
-        RelayState:
-          "http://reboks.nus.edu.sg/nus_saml_provider/public/index.php/adfs/auth",
-      }),
-      redirect: "manual",
-    }
-  );
-  let SimpleSAMLCookies = res.headers.get("set-cookie");
-  const SimpleSAML = SimpleSAMLCookies.match(/SimpleSAML=\S+;/);
-  const SimpleSAMLAuthToken = SimpleSAMLCookies.match(
-    /SimpleSAMLAuthToken=\S+;/
-  );
-  SimpleSAMLCookies = SimpleSAML + " " + SimpleSAMLAuthToken;
-
-  // Retrieve token
-  res = await fetch(
-    "https://reboks.nus.edu.sg/nus_saml_provider/public/index.php/adfs/auth",
-    {
-      method: "get",
-      headers: {
-        cookie: SimpleSAMLCookies,
-      },
-      credentials: "include",
-    }
-  );
-  root = HTMLParser.parse(await res.text());
-  const token = root.querySelector("input[type=hidden]").attributes.value;
-
-  // Send token
-  res = await fetch(
-    "https://reboks.nus.edu.sg/nus_public_web/public/auth/redirectAdfs",
-    {
-      method: "post",
-      headers: {
-        cookie: SimpleSAMLCookies + " " + nuspwCookie,
-      },
-      body: new URLSearchParams({
-        token,
-      }),
-      credentials: "include",
-      redirect: "manual",
-    }
-  );
-
-  // Retrieve pool traffic
-  res = await fetch(
-    "https://reboks.nus.edu.sg/nus_public_web/public/profile/buypass",
-    {
-      method: "get",
-      headers: {
-        cookie: SimpleSAMLCookies + " " + nuspwCookie,
-      },
-      credentials: "include",
-    }
-  );
-  root = HTMLParser.parse(await res.text());
-  const poolTraffic = root
-    .querySelectorAll(".swimbox > b")
-    .map((e) => parseInt(e.textContent));
-
-  // Retrieve gym traffic
-  res = await fetch(
-    "https://reboks.nus.edu.sg/nus_public_web/public/profile/buypass/gym",
-    {
-      method: "get",
-      headers: {
-        cookie: SimpleSAMLCookies + " " + nuspwCookie,
-      },
-      credentials: "include",
-    }
-  );
-  root = HTMLParser.parse(await res.text());
-  const gymTraffic = root
-    .querySelectorAll(".gymbox > b")
-    .map((e) => parseInt(e.textContent));
-
-  // Combine traffic
-  const combinedTraffic = poolTraffic.concat(gymTraffic);
-  return combinedTraffic;
-};
 
 // Updates traffic collection every 5 minutes
 const updateTrafficCollection = async () => {
