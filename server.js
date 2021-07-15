@@ -90,6 +90,41 @@ app.get("/", (req, res) => {
   res.send("hello world!");
 });
 
+/**
+ * @api {post} /register Insert user information
+ * @apiName PostRegister
+ * @apiGroup Registration/Login
+ *
+ * @apiParam {String} email Unique email of the user
+ * @apiParam {String} password Login password of the user
+ *
+ * @apiSuccess {String} _id Unique id of the user in the database
+ * @apiSuccess {String} email Unique email of the user
+ * @apiSuccess {String} joined Join date of the user
+ * @apiSuccess {String} salt Salt associated with the hashed password of the user
+ * @apiSuccess {String} hash Hashed password of the user
+ * @apiSuccess {Number} __v Version key of the user's document in the database
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 Ok
+ *     {
+ *       "_id": "60f0015f67cd8e43b0ec0b3c",
+ *       "email": "e0000000X@u.nus.edu"
+ *       "joined": "2021-07-15T09:35:27.083Z",
+ *       "salt": "a9038007db8f935bf78288ea8ae729336110e56866f6edb4010b3678abaf5cce",
+ *       "hash": "181ea7263b1a53b828952e44d6d0bdc113a6776d48e66e8922464b41e294fd034145b6ee313a87f8f15a1956b6365fe3a07941658efcba9756976e8083fe16e2a8d9b2ae2c572cb5edefb4205e1ba20ad96460777d9ddff50d0e76482bc208fcc6acb5ee2dad55906ff41303980c0baf84287406ac5086f6902fa0f045fcd7d40d0c929ed28ce21548aca9362ce42d4af21c1662412f5e1c75a9aeb0b8af226d704db7a343e0cb5c344fe0026361314cd5f5c01a3b86224377c154500fde4c00ba192a4918ac9dd11dbaea695a670741cb80368ee5840f768c4e7257463c02215e6e8f9c956e5abd86e0e0e4fbdbdaaadd4f7f214660aa670cac6adfa27c96bd5935ab99d41827612fb622600e17234364cd090307ecad05eb5eb1af0875bb7ac508042a88152162b3cb916633f255074a5fff6d334e239b8a7a4f1229ac6bb6c9551d3958ad7aca0dc4414fd2cf5b24a724fe34e22ea19c7ede544c1cc56827882e80d1c0c6fb810acf0817c0e32e20d48956044836b4d42b8769d04fe15e9ee32f65348a066085fbdb0cc072e8fc40862eea911b26dfa8ab092f47d65da55a9bbbf40c0afd3ac7a8aeb878b4f1459d93e100be410cdf9f5d3a017db43989c411c99bccd034a798d8a09a65b28697ac2be1c333d894b840ef829d74413548d31d173bca8f9bde55f8e697dbc1009eebcab6d6b457778c7ccda537c9f94e4b7e"
+ *       "__v": 0
+ *     }
+ *
+ * @apiError UserExistsError A user with the given username is already registered
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 404 Bad Request
+ *     {
+ *       "name": "UserExistsError",
+ *       "message": "A user with the given username is already registered"
+ *     }
+ */
 app.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -105,10 +140,45 @@ app.post("/register", async (req, res) => {
   }
 });
 
+/**
+ * @api {post} /login Login with user information
+ * @apiName PostLogin
+ * @apiGroup Registration/Login
+ *
+ * @apiParam {String} email Unique email of the user
+ * @apiParam {String} password Login password of the user
+ *
+ * @apiSuccess {Boolean} success Success of logging in
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 Ok
+ *     {
+ *       "success": true
+ *     }
+ *
+ * @apiError Unauthorized The given email and password is unauthorized to login
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ *     Unauthorized
+ */
 app.post("/login", passport.authenticate("local"), (req, res) => {
   res.status(200).json({ success: true });
 });
 
+/**
+ * @api {get} /logout Logout the current user
+ * @apiName GetLogout
+ * @apiGroup Registration/Login
+ *
+ * @apiSuccess {Boolean} success Success of logging out
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 Ok
+ *     {
+ *       "success": true
+ *     }
+ */
 app.get("/logout", (req, res) => {
   req.logout();
   res.status(200).json({ success: true });
