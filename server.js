@@ -91,6 +91,18 @@ app.get("/", (req, res) => {
 });
 
 /**
+ * @apiDefine UnauthorizedError
+ *
+ * @apiError Unauthorized The given email and password is unauthorized to login
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *       "success": false
+ *     }
+ */
+
+/**
  * @api {post} /register Insert user information
  * @apiName PostRegister
  * @apiGroup Registration/Login
@@ -232,13 +244,7 @@ app.get("/isLoggedIn", (req, res) => {
  *       "ok":1
  *     }
  *
- * @apiError Unauthorized The given email and password is unauthorized to login
- *
- * @apiErrorExample Error-Response:
- *     HTTP/1.1 401 Unauthorized
- *     {
- *       "success": false
- *     }
+ * @apiUse UnauthorizedError
  *
  * @apiError TimeElapsed The slot's time is within the 2 hours cancellation window and cannot be cancelled
  *
@@ -318,13 +324,7 @@ app.post("/cancel", async (req, res) => {
  *       "ok":1
  *     }
  *
- * @apiError Unauthorized The given email and password is unauthorized to login
- *
- * @apiErrorExample Error-Response:
- *     HTTP/1.1 401 Unauthorized
- *     {
- *       "success": false
- *     }
+ * @apiUse UnauthorizedError
  *
  * @apiError SlotFull The slot has reached maximum capacity and cannot be booked
  *
@@ -497,13 +497,7 @@ app.post("/slots", async (req, res) => {
  *       "ok":1
  *     }
  *
- * @apiError Unauthorized The given email and password is unauthorized to login
- *
- * @apiErrorExample Error-Response:
- *     HTTP/1.1 401 Unauthorized
- *     {
- *       "success": false
- *     }
+ * @apiUse UnauthorizedError
  */
 app.post("/bookedSlots", async (req, res) => {
   if (!req.isAuthenticated() && !req.body.chatId) {
