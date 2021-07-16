@@ -131,7 +131,7 @@ app.get("/", (req, res) => {
  * @apiError UserExistsError A user with the given username is already registered
  *
  * @apiErrorExample Error-Response:
- *     HTTP/1.1 404 Bad Request
+ *     HTTP/1.1 400 Bad Request
  *     {
  *       "name": "UserExistsError",
  *       "message": "A user with the given username is already registered"
