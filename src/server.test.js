@@ -165,11 +165,6 @@ describe("Backend Tests", () => {
         password: "1",
       };
 
-      const nonExistingUser = {
-        email: "e0000000X@u.nus.edu",
-        password: "123",
-      };
-
       const existingUserTelegram = {
         name: "test",
         chatId: 1001,
@@ -231,6 +226,90 @@ describe("Backend Tests", () => {
 
         await agent.post("/login").send(existingUser);
         const res = await agent.post("/book").send(booking);
+
+        expect(res).to.have.status(403);
+        expect(res).to.be.a("Object");
+        expect(res.body).to.have.property("success").eql(false);
+      });
+
+      afterEach(async () => {
+        await users.updateOne({ email: "1@1" }, { $unset: { chatId: "" } });
+        await bookings.deleteMany(booking);
+        agent.close();
+      });
+    });
+
+    describe("POST /cancel", () => {
+      const existingUser = {
+        email: "1@1",
+        password: "1",
+      };
+
+      const existingUserTelegram = {
+        name: "test",
+        chatId: 1001,
+      };
+
+      const booking = {
+        facility: "Wellness Outreach Gym",
+        date: new Date(2050, 6, 17, 14, 00, 00, 00),
+      };
+
+      const bookingTelegram = {
+        chatId: 1001,
+        facility: "Wellness Outreach Gym",
+        date: new Date(2050, 6, 17, 14, 00, 00, 00),
+      };
+
+      const date = new Date();
+      date.setHours(date.getHours() + 1, 0, 0, 0);
+      const bookingWithin2HourWindow = {
+        facility: "Wellness Outreach Gym",
+        date,
+      };
+
+      let agent;
+
+      beforeEach(() => {
+        agent = chai.request.agent(server);
+      });
+
+      it("should POST cancel details if user is logged in on the website and slot can be cancelled", async () => {
+        await agent.post("/login").send(existingUser);
+        await agent.post("/book").send(booking);
+        const res = await agent.post("/cancel").send(booking);
+
+        expect(res).to.have.status(200);
+        expect(res).to.be.a("Object");
+        expect(res.body).to.have.property("success").eql(true);
+      });
+
+      it("should POST booking details if user is logged in on Telegram and slot can be booked", async () => {
+        await agent.post("/login").send(existingUser);
+        await agent.post("/telegram/login").send(existingUserTelegram);
+        await chai.request(server).post("/book").send(bookingTelegram);
+        const res = await agent.post("/cancel").send(bookingTelegram);
+
+        expect(res).to.have.status(200);
+        expect(res).to.be.a("Object");
+        expect(res.body).to.have.property("success").eql(true);
+      });
+
+      it("should not POST booking details if user is not logged in on the website or Telegram", async () => {
+        await agent.post("/login").send(existingUser);
+        await agent.post("/book").send(booking);
+        await agent.get("/logout");
+        const res = await agent.post("/cancel").send(booking);
+
+        expect(res).to.have.status(401);
+        expect(res).to.be.a("Object");
+        expect(res.body).to.have.property("success").eql(false);
+      });
+
+      it("should not POST booking details if the slot is within the 2-hour cancellation window", async () => {
+        await agent.post("/login").send(existingUser);
+        await agent.post("/book").send(bookingWithin2HourWindow);
+        const res = await agent.post("/cancel").send(bookingWithin2HourWindow);
 
         expect(res).to.have.status(403);
         expect(res).to.be.a("Object");

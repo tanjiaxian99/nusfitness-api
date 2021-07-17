@@ -300,7 +300,7 @@ app.post("/book", async (req, res) => {
  *
  * @apiParam {String} chatId Users Telegram ChatId
  * @apiParam {String} facility Facility of the slot that is going to be cancelled
- * @apiParam {String} date Date of the slot
+ * @apiParam {Object} date Date of the slot
  *
  * @apiSuccess {Object} success Success status of cancelling the slot
  *
