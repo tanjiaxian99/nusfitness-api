@@ -6,8 +6,9 @@ const server = "http://local.nusfitness.com:5000";
 const mongoose = require("mongoose");
 
 describe("Backend Tests", () => {
-  let users;
-  let bookings;
+  let usersCollection;
+  let bookingsCollection;
+  let trafficCollection;
   const existingUser1 = { email: "1@test.com", password: "1" };
   const existingUser2 = { email: "2@test.com", password: "2" };
 
@@ -21,8 +22,9 @@ describe("Backend Tests", () => {
     });
 
     const db = mongoose.connection;
-    users = db.collection("users");
-    bookings = db.collection("booking");
+    usersCollection = db.collection("users");
+    bookingsCollection = db.collection("booking");
+    trafficCollection = db.collection("traffic");
 
     await chai.request(server).post("/register").send(existingUser1);
     await chai.request(server).post("/register").send(existingUser2);
@@ -61,7 +63,7 @@ describe("Backend Tests", () => {
       });
 
       afterEach(async () => {
-        await users.deleteOne({ email: "e0000000X@u.nus.edu" });
+        await usersCollection.deleteOne({ email: "e0000000X@u.nus.edu" });
       });
     });
 
@@ -212,7 +214,7 @@ describe("Backend Tests", () => {
         for (let i = 0; i < 20; i++) {
           bookingArray.push({ ...booking });
         }
-        bookings.insertMany(bookingArray);
+        bookingsCollection.insertMany(bookingArray);
 
         await agent.post("/login").send(existingUser1);
         const res = await agent.post("/book").send(booking);
@@ -223,11 +225,11 @@ describe("Backend Tests", () => {
       });
 
       afterEach(async () => {
-        await users.updateOne(
+        await usersCollection.updateOne(
           { email: "1@test.com" },
           { $unset: { chatId: "" } }
         );
-        await bookings.deleteMany(booking);
+        await bookingsCollection.deleteMany(booking);
         agent.close();
       });
     });
@@ -305,12 +307,12 @@ describe("Backend Tests", () => {
       });
 
       afterEach(async () => {
-        await users.updateOne(
+        await usersCollection.updateOne(
           { email: "1@test.com" },
           { $unset: { chatId: "" } }
         );
-        await bookings.deleteMany(booking);
-        await bookings.deleteMany(bookingWithin2HourWindow);
+        await bookingsCollection.deleteMany(booking);
+        await bookingsCollection.deleteMany(bookingWithin2HourWindow);
         agent.close();
       });
     });
@@ -395,11 +397,13 @@ describe("Backend Tests", () => {
       });
 
       afterEach(async () => {
-        await users.updateOne(
+        await usersCollection.updateOne(
           { email: "1@test.com" },
           { $unset: { chatId: "" } }
         );
-        await bookings.deleteMany({ date: { $gte: new Date(2050, 0, 1) } });
+        await bookingsCollection.deleteMany({
+          date: { $gte: new Date(2050, 0, 1) },
+        });
         agent.close();
       });
     });
@@ -535,25 +539,174 @@ describe("Backend Tests", () => {
       });
 
       afterEach(async () => {
-        await users.updateOne(
+        await usersCollection.updateOne(
           { email: "1@test.com" },
           { $unset: { chatId: "" } }
         );
-        await users.updateOne(
+        await usersCollection.updateOne(
           { email: "2@test.com" },
           { $unset: { chatId: "" } }
         );
-        await bookings.deleteOne(booking1ForUser1);
-        await bookings.deleteOne(booking1ForUser2);
-        await bookings.deleteOne(booking2ForUser2);
+        await bookingsCollection.deleteOne(booking1ForUser1);
+        await bookingsCollection.deleteOne(booking1ForUser2);
+        await bookingsCollection.deleteOne(booking2ForUser2);
         agent.close();
       });
     });
   });
 
+  describe("Traffic", () => {
+    describe.only("POST /traffic", () => {
+      before(async () => {
+        await trafficCollection.insertMany([
+          {
+            date: new Date(2021, 6, 5, 13, 50),
+            traffic: [30, 1, 4, 4, 5, 6],
+          },
+          {
+            date: new Date(2021, 6, 6, 13, 50),
+            traffic: [3, 29, 2, 3, 4, 9],
+          },
+          {
+            date: new Date(2021, 6, 12, 13, 50),
+            traffic: [0, 5, 3, 1, 1, 1],
+          },
+          {
+            date: new Date(2021, 6, 12, 18, 0),
+            traffic: [20, 7, 2, 2, 0, 9],
+          },
+          {
+            date: new Date(2021, 6, 15, 13, 50),
+            traffic: [38, 2, 0, 5, 5, 3],
+          },
+        ]);
+      });
+
+      it("should POST facility, date and day", async () => {
+        const res = await chai
+          .request(server)
+          .post("/traffic")
+          .send({
+            facility: 0,
+            date: {
+              $gte: new Date(2021, 6, 5),
+              $lte: new Date(2021, 6, 16),
+            },
+            day: [1, 2, 3, 4, 5, 6, 7],
+          });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Array");
+        expect(res.body.length).to.be.eql(2);
+        expect(res.body[0]).to.have.property("_id");
+        expect(res.body[0]._id).to.have.property("hour").eql("13");
+        expect(res.body[0]._id).to.have.property("minute").eql("50");
+        expect(res.body[0]).to.have.property("date");
+        expect(res.body[0]).to.have.property("count").eql(17.8);
+
+        expect(res.body[1]._id).to.have.property("hour").eql("18");
+        expect(res.body[1]._id).to.have.property("minute").eql("00");
+        expect(res.body[1]).to.have.property("count").eql(20);
+      });
+
+      it("should POST facility, date and day limited to Monday and Friday", async () => {
+        const res = await chai
+          .request(server)
+          .post("/traffic")
+          .send({
+            facility: 0,
+            date: {
+              $gte: new Date(2021, 6, 5),
+              $lte: new Date(2021, 6, 16),
+            },
+            day: [2, 6],
+          });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Array");
+        expect(res.body.length).to.be.eql(2);
+        expect(res.body[0]).to.have.property("_id");
+        expect(res.body[0]._id).to.have.property("hour").eql("13");
+        expect(res.body[0]._id).to.have.property("minute").eql("50");
+        expect(res.body[0]).to.have.property("count").eql(15);
+
+        expect(res.body[1]._id).to.have.property("hour").eql("18");
+        expect(res.body[1]._id).to.have.property("minute").eql("00");
+        expect(res.body[1]).to.have.property("count").eql(20);
+      });
+
+      it("should POST facility, date and day limited to Sunday, Wednesday, Friday, Saturday", async () => {
+        const res = await chai
+          .request(server)
+          .post("/traffic")
+          .send({
+            facility: 0,
+            date: {
+              $gte: new Date(2021, 6, 5),
+              $lte: new Date(2021, 6, 16),
+            },
+            day: [1, 4, 6, 7],
+          });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Array");
+        expect(res.body.length).to.be.eql(0);
+      });
+
+      it("should POST facility, date limited to one day and day", async () => {
+        const res = await chai
+          .request(server)
+          .post("/traffic")
+          .send({
+            facility: 0,
+            date: {
+              $gte: new Date(2021, 6, 5),
+              $lte: new Date(2021, 6, 6),
+            },
+            day: [1, 2, 3, 4, 5, 6, 7],
+          });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Array");
+        expect(res.body.length).to.be.eql(1);
+        expect(res.body[0]).to.have.property("_id");
+        expect(res.body[0]._id).to.have.property("hour").eql("13");
+        expect(res.body[0]._id).to.have.property("minute").eql("50");
+        expect(res.body[0]).to.have.property("count").eql(30);
+      });
+
+      it("should POST facility, with non-overlappping date and day", async () => {
+        const res = await chai
+          .request(server)
+          .post("/traffic")
+          .send({
+            facility: 0,
+            date: {
+              $gte: new Date(2021, 6, 5),
+              $lte: new Date(2021, 6, 7),
+            },
+            day: [1, 5, 6, 7],
+          });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Array");
+        expect(res.body.length).to.be.eql(0);
+      });
+
+      after(async () => {
+        await trafficCollection.deleteMany({
+          date: {
+            $gte: new Date(2021, 6, 5),
+            $lte: new Date(2021, 6, 16),
+          },
+        });
+      });
+    });
+  });
+
   after(async () => {
-    await users.deleteOne({ email: existingUser1.email });
-    await users.deleteOne({ email: existingUser2.email });
+    await usersCollection.deleteOne({ email: existingUser1.email });
+    await usersCollection.deleteOne({ email: existingUser2.email });
     mongoose.disconnect();
   });
 });

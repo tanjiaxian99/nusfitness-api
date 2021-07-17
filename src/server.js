@@ -552,8 +552,8 @@ app.post("/bookedSlots", async (req, res) => {
  * @apiGroup Traffic
  *
  * @apiParam {Number} facility Number associated with selected facility
- * @apiParam {Object} dateFilter Date range to filter by
- * @apiParam {Number[]} dayFilter Days to filter by
+ * @apiParam {Object} date Date range to filter by
+ * @apiParam {Number[]} day Days to filter by
  *
  * @apiSuccess {Object[]} slots Array of slots
  *
