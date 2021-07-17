@@ -34,7 +34,7 @@ describe("Backend Tests", () => {
         const res = await chai.request(server).post("/register").send(user);
 
         expect(res).to.have.status(200);
-        expect(res).to.be.a("Object");
+        expect(res.body).to.be.a("Object");
         expect(res.body).to.have.property("_id");
         expect(res.body).to.have.property("email");
         expect(res.body).to.have.property("joined");
@@ -48,7 +48,7 @@ describe("Backend Tests", () => {
         let res = await chai.request(server).post("/register").send(user);
         res = await chai.request(server).post("/register").send(user);
         expect(res).to.have.status(400);
-        expect(res).to.be.a("Object");
+        expect(res.body).to.be.a("Object");
         expect(res.body).to.have.property("name").eql("UserExistsError");
         expect(res.body)
           .to.have.property("message")
@@ -83,7 +83,7 @@ describe("Backend Tests", () => {
           .send(existingUser);
 
         expect(res).to.have.status(200);
-        expect(res).to.be.a("Object");
+        expect(res.body).to.be.a("Object");
         expect(res.body).to.have.property("success").eql(true);
         expect(res).to.have.cookie("connect.sid");
       });
@@ -130,7 +130,7 @@ describe("Backend Tests", () => {
         const res = await agent.get("/isLoggedIn").send(existingUser);
 
         expect(res).to.have.status(200);
-        expect(res).to.be.a("Object");
+        expect(res.body).to.be.a("Object");
         expect(res.body).to.have.property("authenticated").eql(true);
       });
 
@@ -138,7 +138,7 @@ describe("Backend Tests", () => {
         const res = await agent.get("/isLoggedIn").send(existingUser);
 
         expect(res).to.have.status(200);
-        expect(res).to.be.a("Object");
+        expect(res.body).to.be.a("Object");
         expect(res.body).to.have.property("authenticated").eql(false);
       });
 
@@ -148,7 +148,7 @@ describe("Backend Tests", () => {
         const res = await agent.get("/isLoggedIn").send(nonExistingUser);
 
         expect(res).to.have.status(200);
-        expect(res).to.be.a("Object");
+        expect(res.body).to.be.a("Object");
         expect(res.body).to.have.property("authenticated").eql(false);
       });
 
@@ -192,7 +192,7 @@ describe("Backend Tests", () => {
         const res = await agent.post("/book").send(booking);
 
         expect(res).to.have.status(200);
-        expect(res).to.be.a("Object");
+        expect(res.body).to.be.a("Object");
         expect(res.body).to.have.property("success").eql(true);
       });
 
@@ -205,7 +205,7 @@ describe("Backend Tests", () => {
           .send(bookingTelegram);
 
         expect(res).to.have.status(200);
-        expect(res).to.be.a("Object");
+        expect(res.body).to.be.a("Object");
         expect(res.body).to.have.property("success").eql(true);
       });
 
@@ -213,7 +213,7 @@ describe("Backend Tests", () => {
         const res = await agent.post("/book").send(booking);
 
         expect(res).to.have.status(401);
-        expect(res).to.be.a("Object");
+        expect(res.body).to.be.a("Object");
         expect(res.body).to.have.property("success").eql(false);
       });
 
@@ -228,7 +228,7 @@ describe("Backend Tests", () => {
         const res = await agent.post("/book").send(booking);
 
         expect(res).to.have.status(403);
-        expect(res).to.be.a("Object");
+        expect(res.body).to.be.a("Object");
         expect(res.body).to.have.property("success").eql(false);
       });
 
@@ -280,7 +280,7 @@ describe("Backend Tests", () => {
         const res = await agent.post("/cancel").send(booking);
 
         expect(res).to.have.status(200);
-        expect(res).to.be.a("Object");
+        expect(res.body).to.be.a("Object");
         expect(res.body).to.have.property("success").eql(true);
       });
 
@@ -291,7 +291,7 @@ describe("Backend Tests", () => {
         const res = await agent.post("/cancel").send(bookingTelegram);
 
         expect(res).to.have.status(200);
-        expect(res).to.be.a("Object");
+        expect(res.body).to.be.a("Object");
         expect(res.body).to.have.property("success").eql(true);
       });
 
@@ -302,7 +302,7 @@ describe("Backend Tests", () => {
         const res = await agent.post("/cancel").send(booking);
 
         expect(res).to.have.status(401);
-        expect(res).to.be.a("Object");
+        expect(res.body).to.be.a("Object");
         expect(res.body).to.have.property("success").eql(false);
       });
 
@@ -312,7 +312,7 @@ describe("Backend Tests", () => {
         const res = await agent.post("/cancel").send(bookingWithin2HourWindow);
 
         expect(res).to.have.status(403);
-        expect(res).to.be.a("Object");
+        expect(res.body).to.be.a("Object");
         expect(res.body).to.have.property("success").eql(false);
       });
 
