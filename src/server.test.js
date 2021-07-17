@@ -324,9 +324,14 @@ describe("Backend Tests", () => {
       });
     });
 
-    describe("POST /slots", () => {
-      const existingUser = {
+    describe.only("POST /slots", () => {
+      const user1 = {
         email: "1@1",
+        password: "1",
+      };
+
+      const user2 = {
+        email: "2@1",
         password: "1",
       };
 
@@ -356,7 +361,7 @@ describe("Backend Tests", () => {
       });
 
       it("should POST facility, startDate endDate and return a filled array", async () => {
-        await agent.post("/login").send(existingUser);
+        await agent.post("/login").send(user1);
         for (let i = 0; i < 4; i++) {
           await agent.post("/book").send(bookingArray[i]);
         }
@@ -374,7 +379,7 @@ describe("Backend Tests", () => {
       });
 
       it("should POST facility and startDate and return a filled array", async () => {
-        await agent.post("/login").send(existingUser);
+        await agent.post("/login").send(user1);
         for (let i = 0; i < 4; i++) {
           await agent.post("/book").send(bookingArray[i]);
         }
@@ -388,6 +393,24 @@ describe("Backend Tests", () => {
         expect(res.body.length).to.be.eql(1);
         expect(res.body[0]).to.have.property("_id");
         expect(res.body[0]).to.have.property("count");
+      });
+
+      it("should POST facility and startDate and return a filled array for bookings made by different users", async () => {
+        await agent.post("/login").send(user1);
+        await agent.post("/book").send({ ...bookingArray[0] });
+        await agent.get("/logout");
+        await agent.post("/login").send(user2);
+        await agent.post("/book").send({ ...bookingArray[0] });
+        const res = await agent.post("/slots").send({
+          facility: "Wellness Outreach Gym",
+          startDate: new Date(2050, 6, 17),
+        });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Array");
+        expect(res.body.length).to.be.eql(1);
+        expect(res.body[0]).to.have.property("_id");
+        expect(res.body[0]).to.have.property("count").eql(2);
       });
 
       afterEach(async () => {
@@ -529,7 +552,7 @@ describe("Backend Tests", () => {
         expect(res.body[0]).to.have.property("date");
       });
 
-      it("should not POST booking details if user is not logged in on the website or Telegram", async () => {
+      it("should not POST facility if user is not logged in on the website or Telegram", async () => {
         const res = await agent.post("/bookedSlots");
 
         expect(res).to.have.status(401);
