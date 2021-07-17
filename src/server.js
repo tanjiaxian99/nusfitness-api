@@ -214,6 +214,86 @@ app.get("/isLoggedIn", (req, res) => {
 });
 
 /**
+ * @api {post} /book Book slot
+ * @apiName PostBook
+ * @apiGroup Booking
+ *
+ * @apiParam {String} chatId Users Telegram ChatId
+ * @apiParam {String} facility Facility of the slot that is going to be booked
+ * @apiParam {Object} date Date of the slot
+ *
+ * @apiSuccess {Object} success Success status of booking the slot
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 Ok
+ *     {
+ *       "success": true
+ *     }
+ *
+ * @apiError MongoError Error raised by MongoDB
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "name": "MongoError",
+ *       "err": "E11000 duplicate key error index: test.test.$country_1  dup key: { : \"XYZ\" }",
+ *       "code": 11000,
+ *       "n": 0,
+ *       "connectionId":10706,
+ *       "ok":1
+ *     }
+ *
+ * @apiUse UnauthorizedError
+ *
+ * @apiError SlotFull The slot has reached maximum capacity and cannot be booked
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 403 Forbidden
+ *     {
+ *       "success": false
+ *     }
+ */
+app.post("/book", async (req, res) => {
+  if (!req.isAuthenticated() && !req.body.chatId) {
+    res.status(401).json({ success: false });
+  } else {
+    const bookingCollection = db.collection("booking");
+    const facility = req.body.facility;
+    const date = new Date(req.body.date);
+    const maxCapacity = 20;
+    let email;
+
+    // Make sure count does not exceed max capacity in the event of multiple bookings
+    const count = await bookingCollection.countDocuments({
+      facility,
+      date,
+    });
+
+    // Retrieve email
+    if (req.isAuthenticated()) {
+      email = req.user.email;
+    } else {
+      const chatId = parseInt(req.body.chatId);
+      email = await getEmail(chatId);
+    }
+
+    if (count >= maxCapacity) {
+      res.status(403).json({ success: false });
+    } else {
+      const booking = { email, facility, date };
+      bookingCollection.insertOne(booking, (error, result) => {
+        if (error) {
+          console.log(error);
+          res.status(400).json(error);
+        } else {
+          res.status(200).json({ success: true });
+        }
+      });
+    }
+  }
+});
+
+/**
  * @api {post} /cancel Delete booked slot
  * @apiName PostCancel
  * @apiGroup Booking
@@ -289,86 +369,6 @@ app.post("/cancel", async (req, res) => {
       res.status(400).json({ success: false });
     } else {
       res.status(200).json({ success: true });
-    }
-  }
-});
-
-/**
- * @api {post} /book Book slot
- * @apiName PostBook
- * @apiGroup Booking
- *
- * @apiParam {String} chatId Users Telegram ChatId
- * @apiParam {String} facility Facility of the slot that is going to be booked
- * @apiParam {String} date Date of the slot
- *
- * @apiSuccess {Object} success Success status of cancelling the slot
- *
- * @apiSuccessExample Success-Response:
- *     HTTP/1.1 200 Ok
- *     {
- *       "success": true
- *     }
- *
- * @apiError MongoError Error raised by MongoDB
- *
- * @apiErrorExample Error-Response:
- *     HTTP/1.1 400 Bad Request
- *     {
- *       "name": "MongoError",
- *       "err": "E11000 duplicate key error index: test.test.$country_1  dup key: { : \"XYZ\" }",
- *       "code": 11000,
- *       "n": 0,
- *       "connectionId":10706,
- *       "ok":1
- *     }
- *
- * @apiUse UnauthorizedError
- *
- * @apiError SlotFull The slot has reached maximum capacity and cannot be booked
- *
- * @apiErrorExample Error-Response:
- *     HTTP/1.1 403 Forbidden
- *     {
- *       "success": false
- *     }
- */
-app.post("/book", async (req, res) => {
-  if (!req.isAuthenticated() && !req.body.chatId) {
-    res.status(401).json({ success: false });
-  } else {
-    const bookingCollection = db.collection("booking");
-    const facility = req.body.facility;
-    const date = new Date(req.body.date);
-    const maxCapacity = 20;
-    let email;
-
-    // Make sure count does not exceed max capacity in the event of multiple bookings
-    const count = await bookingCollection.countDocuments({
-      facility,
-      date,
-    });
-
-    // Retrieve email
-    if (req.isAuthenticated()) {
-      email = req.user.email;
-    } else {
-      const chatId = parseInt(req.body.chatId);
-      email = await getEmail(chatId);
-    }
-
-    if (count >= maxCapacity) {
-      res.status(403).json({ success: false });
-    } else {
-      const booking = { email, facility, date };
-      bookingCollection.insertOne(booking, (error, result) => {
-        if (error) {
-          console.log(error);
-          res.status(400).json(error);
-        } else {
-          res.status(200).json({ success: true });
-        }
-      });
     }
   }
 });

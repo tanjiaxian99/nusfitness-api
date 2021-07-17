@@ -7,6 +7,7 @@ const mongoose = require("mongoose");
 
 describe("Backend Tests", () => {
   let users;
+  let bookings;
 
   before(() => {
     // Localhost
@@ -19,6 +20,7 @@ describe("Backend Tests", () => {
 
     const db = mongoose.connection;
     users = db.collection("users");
+    bookings = db.collection("booking");
   });
 
   describe("Registration/Login", () => {
@@ -151,6 +153,93 @@ describe("Backend Tests", () => {
       });
 
       afterEach(() => {
+        agent.close();
+      });
+    });
+  });
+
+  describe("Booking", () => {
+    describe("POST /book", () => {
+      const existingUser = {
+        email: "1@1",
+        password: "1",
+      };
+
+      const nonExistingUser = {
+        email: "e0000000X@u.nus.edu",
+        password: "123",
+      };
+
+      const existingUserTelegram = {
+        name: "test",
+        chatId: 1001,
+      };
+
+      const booking = {
+        facility: "Wellness Outreach Gym",
+        date: new Date(2021, 6, 17, 14, 00, 00, 00),
+      };
+
+      const bookingTelegram = {
+        chatId: 1001,
+        facility: "Wellness Outreach Gym",
+        date: new Date(2021, 6, 17, 14, 00, 00, 00),
+      };
+
+      let agent;
+
+      beforeEach(() => {
+        agent = chai.request.agent(server);
+      });
+
+      it("should POST booking details if user is logged in on the website and slot can be booked", async () => {
+        await agent.post("/login").send(existingUser);
+        const res = await agent.post("/book").send(booking);
+
+        expect(res).to.have.status(200);
+        expect(res).to.be.a("Object");
+        expect(res.body).to.have.property("success").eql(true);
+      });
+
+      it("should POST booking details if user is logged in on Telegram and slot can be booked", async () => {
+        await agent.post("/login").send(existingUser);
+        await agent.post("/telegram/login").send(existingUserTelegram);
+        const res = await chai
+          .request(server)
+          .post("/book")
+          .send(bookingTelegram);
+
+        expect(res).to.have.status(200);
+        expect(res).to.be.a("Object");
+        expect(res.body).to.have.property("success").eql(true);
+      });
+
+      it("should not POST booking details if user is not logged in on the website or Telegram", async () => {
+        const res = await agent.post("/book").send(booking);
+
+        expect(res).to.have.status(401);
+        expect(res).to.be.a("Object");
+        expect(res.body).to.have.property("success").eql(false);
+      });
+
+      it("should not POST booking details if the slot is full", async () => {
+        bookingArray = [];
+        for (let i = 0; i < 20; i++) {
+          bookingArray.push({ ...booking });
+        }
+        bookings.insertMany(bookingArray);
+
+        await agent.post("/login").send(existingUser);
+        const res = await agent.post("/book").send(booking);
+
+        expect(res).to.have.status(403);
+        expect(res).to.be.a("Object");
+        expect(res.body).to.have.property("success").eql(false);
+      });
+
+      afterEach(async () => {
+        await users.updateOne({ email: "1@1" }, { $unset: { chatId: "" } });
+        await bookings.deleteMany(booking);
         agent.close();
       });
     });
