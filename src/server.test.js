@@ -396,6 +396,156 @@ describe("Backend Tests", () => {
         agent.close();
       });
     });
+
+    describe("POST /bookedSlots", () => {
+      const user1 = {
+        email: "1@1",
+        password: "1",
+      };
+
+      const user2 = {
+        email: "2@1",
+        password: "1",
+      };
+
+      const userTelegram1 = {
+        name: "test1",
+        chatId: 1001,
+      };
+
+      const userTelegram2 = {
+        name: "test2",
+        chatId: 1002,
+      };
+
+      const booking1ForUser1 = {
+        facility: "Wellness Outreach Gym",
+        date: new Date(2021, 6, 17, 14, 00, 00, 00),
+      };
+
+      const booking1ForUser2 = {
+        facility: "University Town Swimming Pool",
+        date: new Date(2030, 6, 5, 8, 00, 00, 00),
+      };
+
+      const booking2ForUser2 = {
+        facility: "University Town Gym",
+        date: new Date(2030, 6, 5, 8, 00, 00, 00),
+      };
+
+      let agent;
+
+      beforeEach(() => {
+        agent = chai.request.agent(server);
+      });
+
+      it("should POST facility if user is logged in on the website and there are booked slots of the chosen facility", async () => {
+        await agent.post("/login").send(user1);
+        await agent.post("/book").send(booking1ForUser1);
+        await agent.get("/logout");
+        await agent.post("/login").send(user2);
+        await agent.post("/book").send(booking1ForUser2);
+        const res = await agent
+          .post("/bookedSlots")
+          .send({ facility: "University Town Swimming Pool" });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Array");
+        expect(res.body.length).to.be.eql(1);
+        expect(res.body[0]).to.have.property("_id");
+        expect(res.body[0]).to.have.property("email");
+        expect(res.body[0]).to.have.property("facility");
+        expect(res.body[0]).to.have.property("date");
+      });
+
+      it("should POST facility if user is logged in on the website and there are no booked slots of the chosen facility", async () => {
+        await agent.post("/login").send(user1);
+        await agent.post("/book").send(booking1ForUser1);
+        await agent.get("/logout");
+        await agent.post("/login").send(user2);
+        await agent.post("/book").send(booking1ForUser2);
+        const res = await agent
+          .post("/bookedSlots")
+          .send({ facility: "Wellness Outreach Gym" });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Array");
+        expect(res.body.length).to.be.eql(0);
+      });
+
+      it("should POST facility if user is logged in on Telegram and there are booked slots of the chosen facility", async () => {
+        await agent.post("/login").send(user1);
+        await agent.post("/telegram/login").send(userTelegram1);
+        await agent.post("/book").send(booking1ForUser1);
+        await agent.get("/logout");
+        await agent.post("/login").send(user2);
+        await agent.post("/telegram/login").send(userTelegram2);
+        await agent.post("/book").send(booking1ForUser2);
+        const res = await agent
+          .post("/bookedSlots")
+          .send({ chatId: 1002, facility: "University Town Swimming Pool" });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Array");
+        expect(res.body.length).to.be.eql(1);
+        expect(res.body[0]).to.have.property("_id");
+        expect(res.body[0]).to.have.property("email");
+        expect(res.body[0]).to.have.property("facility");
+        expect(res.body[0]).to.have.property("date");
+      });
+
+      it("should POST facility if user is logged in on Telegram and there are no booked slots of the chosen facility", async () => {
+        await agent.post("/login").send(user1);
+        await agent.post("/telegram/login").send(userTelegram1);
+        await agent.post("/book").send(booking1ForUser1);
+        await agent.get("/logout");
+        await agent.post("/login").send(user2);
+        await agent.post("/telegram/login").send(userTelegram2);
+        await agent.post("/book").send(booking1ForUser2);
+        const res = await agent
+          .post("/bookedSlots")
+          .send({ chatId: 1002, facility: "Wellness Outreach Gym" });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Array");
+        expect(res.body.length).to.be.eql(0);
+      });
+
+      it("should POST if no facility is given", async () => {
+        await agent.post("/login").send(user1);
+        await agent.post("/book").send(booking1ForUser1);
+        await agent.get("/logout");
+        await agent.post("/login").send(user2);
+        await agent.post("/book").send(booking1ForUser2);
+        await agent.post("/book").send(booking2ForUser2);
+        const res = await agent.post("/bookedSlots");
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Array");
+        expect(res.body.length).to.be.eql(2);
+        expect(res.body[0]).to.have.property("_id");
+        expect(res.body[0]).to.have.property("email");
+        expect(res.body[0]).to.have.property("facility");
+        expect(res.body[0]).to.have.property("date");
+      });
+
+      it("should not POST booking details if user is not logged in on the website or Telegram", async () => {
+        const res = await agent.post("/bookedSlots");
+
+        expect(res).to.have.status(401);
+        expect(res).to.be.a("Object");
+        expect(res.body).to.have.property("success").eql(false);
+      });
+
+      afterEach(async () => {
+        await users.updateOne({ email: "1@1" }, { $unset: { chatId: "" } });
+        await users.updateOne({ email: "2@1" }, { $unset: { chatId: "" } });
+        await bookings.deleteOne(booking1ForUser1);
+        await bookings.deleteOne(booking1ForUser2);
+        await bookings.deleteOne(booking2ForUser2);
+        agent.close();
+      });
+    });
   });
 
   after(() => {

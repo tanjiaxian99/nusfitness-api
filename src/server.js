@@ -500,7 +500,7 @@ app.post("/slots", async (req, res) => {
  */
 app.post("/bookedSlots", async (req, res) => {
   if (!req.isAuthenticated() && !req.body.chatId) {
-    res.status(401).json("Unauthorized");
+    res.status(401).json({ success: false });
   } else {
     const facility = req.body.facility;
     let email;
