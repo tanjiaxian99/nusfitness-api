@@ -172,7 +172,6 @@ app.post("/register", async (req, res) => {
  *
  * @apiErrorExample Error-Response:
  *     HTTP/1.1 401 Unauthorized
- *     Unauthorized
  */
 app.post("/login", passport.authenticate("local"), (req, res) => {
   res.status(200).json({ success: true });
