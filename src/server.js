@@ -421,7 +421,7 @@ app.post("/slots", async (req, res) => {
   const startDate = new Date(req.body.startDate);
   const endDate = req.body.endDate
     ? new Date(req.body.endDate)
-    : new Date(req.body.startDate);
+    : new Date(dateFns.addDays(startDate, 1));
 
   try {
     const aggregate = await bookingCollection.aggregate([

@@ -218,7 +218,7 @@ describe("Backend Tests", () => {
       });
 
       it("should not POST booking details if the slot is full", async () => {
-        bookingArray = [];
+        const bookingArray = [];
         for (let i = 0; i < 20; i++) {
           bookingArray.push({ ...booking });
         }
@@ -319,6 +319,80 @@ describe("Backend Tests", () => {
       afterEach(async () => {
         await users.updateOne({ email: "1@1" }, { $unset: { chatId: "" } });
         await bookings.deleteMany(booking);
+        await bookings.deleteMany(bookingWithin2HourWindow);
+        agent.close();
+      });
+    });
+
+    describe("POST /slots", () => {
+      const existingUser = {
+        email: "1@1",
+        password: "1",
+      };
+
+      const bookingArray = [
+        {
+          facility: "Wellness Outreach Gym",
+          date: new Date(2050, 6, 17, 14, 00, 00, 00),
+        },
+        {
+          facility: "Wellness Outreach Gym",
+          date: new Date(2050, 6, 19, 15, 00, 00, 00),
+        },
+        {
+          facility: "Wellness Outreach Gym",
+          date: new Date(2050, 8, 17, 15, 00, 00, 00),
+        },
+        {
+          facility: "University Town Swimming Pool",
+          date: new Date(2050, 6, 17, 14, 00, 00, 00),
+        },
+      ];
+
+      let agent;
+
+      beforeEach(() => {
+        agent = chai.request.agent(server);
+      });
+
+      it("should POST facility, startDate endDate and return a filled array", async () => {
+        await agent.post("/login").send(existingUser);
+        for (let i = 0; i < 4; i++) {
+          await agent.post("/book").send(bookingArray[i]);
+        }
+        const res = await agent.post("/slots").send({
+          facility: "Wellness Outreach Gym",
+          startDate: new Date(2050, 6, 17),
+          endDate: new Date(2050, 6, 20),
+        });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Array");
+        expect(res.body.length).to.be.eql(2);
+        expect(res.body[0]).to.have.property("_id");
+        expect(res.body[0]).to.have.property("count");
+      });
+
+      it("should POST facility and startDate and return a filled array", async () => {
+        await agent.post("/login").send(existingUser);
+        for (let i = 0; i < 4; i++) {
+          await agent.post("/book").send(bookingArray[i]);
+        }
+        const res = await agent.post("/slots").send({
+          facility: "Wellness Outreach Gym",
+          startDate: new Date(2050, 6, 17),
+        });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Array");
+        expect(res.body.length).to.be.eql(1);
+        expect(res.body[0]).to.have.property("_id");
+        expect(res.body[0]).to.have.property("count");
+      });
+
+      afterEach(async () => {
+        await users.updateOne({ email: "1@1" }, { $unset: { chatId: "" } });
+        await bookings.deleteMany({ date: { $gte: new Date(2050, 0, 1) } });
         agent.close();
       });
     });
