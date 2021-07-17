@@ -8,8 +8,10 @@ const mongoose = require("mongoose");
 describe("Backend Tests", () => {
   let users;
   let bookings;
+  const existingUser1 = { email: "1@test.com", password: "1" };
+  const existingUser2 = { email: "2@test.com", password: "2" };
 
-  before(() => {
+  before(async () => {
     // Localhost
     mongoose.connect("mongodb://localhost:27017/nusfitness", {
       useNewUrlParser: true,
@@ -21,6 +23,9 @@ describe("Backend Tests", () => {
     const db = mongoose.connection;
     users = db.collection("users");
     bookings = db.collection("booking");
+
+    await chai.request(server).post("/register").send(existingUser1);
+    await chai.request(server).post("/register").send(existingUser2);
   });
 
   describe("Registration/Login", () => {
@@ -61,18 +66,13 @@ describe("Backend Tests", () => {
     });
 
     describe("POST /login", () => {
-      const existingUser = {
-        email: "1@1",
-        password: "1",
-      };
-
       const nonExistingUser = {
         email: "e0000000X@u.nus.edu",
         password: "123",
       };
 
       const existingUserWrongPassword = {
-        email: "1@1",
+        email: "1@test.com",
         password: "2",
       };
 
@@ -80,7 +80,7 @@ describe("Backend Tests", () => {
         const res = await chai
           .request(server)
           .post("/login")
-          .send(existingUser);
+          .send(existingUser1);
 
         expect(res).to.have.status(200);
         expect(res.body).to.be.a("Object");
@@ -108,11 +108,6 @@ describe("Backend Tests", () => {
     });
 
     describe("GET /isLoggedIn", async () => {
-      const existingUser = {
-        email: "1@1",
-        password: "1",
-      };
-
       const nonExistingUser = {
         email: "e0000000X@u.nus.edu",
         password: "123",
@@ -125,9 +120,9 @@ describe("Backend Tests", () => {
       });
 
       it("should GET login status if user is logged in", async () => {
-        await agent.post("/login").send(existingUser);
+        await agent.post("/login").send(existingUser1);
 
-        const res = await agent.get("/isLoggedIn").send(existingUser);
+        const res = await agent.get("/isLoggedIn").send(existingUser1);
 
         expect(res).to.have.status(200);
         expect(res.body).to.be.a("Object");
@@ -135,7 +130,7 @@ describe("Backend Tests", () => {
       });
 
       it("should GET login status if user is not logged in", async () => {
-        const res = await agent.get("/isLoggedIn").send(existingUser);
+        const res = await agent.get("/isLoggedIn").send(existingUser1);
 
         expect(res).to.have.status(200);
         expect(res.body).to.be.a("Object");
@@ -160,11 +155,6 @@ describe("Backend Tests", () => {
 
   describe("Booking", () => {
     describe("POST /book", () => {
-      const existingUser = {
-        email: "1@1",
-        password: "1",
-      };
-
       const existingUserTelegram = {
         name: "test",
         chatId: 1001,
@@ -188,7 +178,7 @@ describe("Backend Tests", () => {
       });
 
       it("should POST booking details if user is logged in on the website and slot can be booked", async () => {
-        await agent.post("/login").send(existingUser);
+        await agent.post("/login").send(existingUser1);
         const res = await agent.post("/book").send(booking);
 
         expect(res).to.have.status(200);
@@ -197,7 +187,7 @@ describe("Backend Tests", () => {
       });
 
       it("should POST booking details if user is logged in on Telegram and slot can be booked", async () => {
-        await agent.post("/login").send(existingUser);
+        await agent.post("/login").send(existingUser1);
         await agent.post("/telegram/login").send(existingUserTelegram);
         const res = await chai
           .request(server)
@@ -224,7 +214,7 @@ describe("Backend Tests", () => {
         }
         bookings.insertMany(bookingArray);
 
-        await agent.post("/login").send(existingUser);
+        await agent.post("/login").send(existingUser1);
         const res = await agent.post("/book").send(booking);
 
         expect(res).to.have.status(403);
@@ -233,18 +223,16 @@ describe("Backend Tests", () => {
       });
 
       afterEach(async () => {
-        await users.updateOne({ email: "1@1" }, { $unset: { chatId: "" } });
+        await users.updateOne(
+          { email: "1@test.com" },
+          { $unset: { chatId: "" } }
+        );
         await bookings.deleteMany(booking);
         agent.close();
       });
     });
 
     describe("POST /cancel", () => {
-      const existingUser = {
-        email: "1@1",
-        password: "1",
-      };
-
       const existingUserTelegram = {
         name: "test",
         chatId: 1001,
@@ -275,7 +263,7 @@ describe("Backend Tests", () => {
       });
 
       it("should POST cancel details if user is logged in on the website and slot can be cancelled", async () => {
-        await agent.post("/login").send(existingUser);
+        await agent.post("/login").send(existingUser1);
         await agent.post("/book").send(booking);
         const res = await agent.post("/cancel").send(booking);
 
@@ -285,7 +273,7 @@ describe("Backend Tests", () => {
       });
 
       it("should POST booking details if user is logged in on Telegram and slot can be booked", async () => {
-        await agent.post("/login").send(existingUser);
+        await agent.post("/login").send(existingUser1);
         await agent.post("/telegram/login").send(existingUserTelegram);
         await chai.request(server).post("/book").send(bookingTelegram);
         const res = await agent.post("/cancel").send(bookingTelegram);
@@ -296,7 +284,7 @@ describe("Backend Tests", () => {
       });
 
       it("should not POST booking details if user is not logged in on the website or Telegram", async () => {
-        await agent.post("/login").send(existingUser);
+        await agent.post("/login").send(existingUser1);
         await agent.post("/book").send(booking);
         await agent.get("/logout");
         const res = await agent.post("/cancel").send(booking);
@@ -307,7 +295,7 @@ describe("Backend Tests", () => {
       });
 
       it("should not POST booking details if the slot is within the 2-hour cancellation window", async () => {
-        await agent.post("/login").send(existingUser);
+        await agent.post("/login").send(existingUser1);
         await agent.post("/book").send(bookingWithin2HourWindow);
         const res = await agent.post("/cancel").send(bookingWithin2HourWindow);
 
@@ -317,24 +305,17 @@ describe("Backend Tests", () => {
       });
 
       afterEach(async () => {
-        await users.updateOne({ email: "1@1" }, { $unset: { chatId: "" } });
+        await users.updateOne(
+          { email: "1@test.com" },
+          { $unset: { chatId: "" } }
+        );
         await bookings.deleteMany(booking);
         await bookings.deleteMany(bookingWithin2HourWindow);
         agent.close();
       });
     });
 
-    describe.only("POST /slots", () => {
-      const user1 = {
-        email: "1@1",
-        password: "1",
-      };
-
-      const user2 = {
-        email: "2@1",
-        password: "1",
-      };
-
+    describe("POST /slots", () => {
       const bookingArray = [
         {
           facility: "Wellness Outreach Gym",
@@ -361,7 +342,7 @@ describe("Backend Tests", () => {
       });
 
       it("should POST facility, startDate endDate and return a filled array", async () => {
-        await agent.post("/login").send(user1);
+        await agent.post("/login").send(existingUser1);
         for (let i = 0; i < 4; i++) {
           await agent.post("/book").send(bookingArray[i]);
         }
@@ -379,7 +360,7 @@ describe("Backend Tests", () => {
       });
 
       it("should POST facility and startDate and return a filled array", async () => {
-        await agent.post("/login").send(user1);
+        await agent.post("/login").send(existingUser1);
         for (let i = 0; i < 4; i++) {
           await agent.post("/book").send(bookingArray[i]);
         }
@@ -396,10 +377,10 @@ describe("Backend Tests", () => {
       });
 
       it("should POST facility and startDate and return a filled array for bookings made by different users", async () => {
-        await agent.post("/login").send(user1);
+        await agent.post("/login").send(existingUser1);
         await agent.post("/book").send({ ...bookingArray[0] });
         await agent.get("/logout");
-        await agent.post("/login").send(user2);
+        await agent.post("/login").send(existingUser2);
         await agent.post("/book").send({ ...bookingArray[0] });
         const res = await agent.post("/slots").send({
           facility: "Wellness Outreach Gym",
@@ -414,23 +395,16 @@ describe("Backend Tests", () => {
       });
 
       afterEach(async () => {
-        await users.updateOne({ email: "1@1" }, { $unset: { chatId: "" } });
+        await users.updateOne(
+          { email: "1@test.com" },
+          { $unset: { chatId: "" } }
+        );
         await bookings.deleteMany({ date: { $gte: new Date(2050, 0, 1) } });
         agent.close();
       });
     });
 
     describe("POST /bookedSlots", () => {
-      const user1 = {
-        email: "1@1",
-        password: "1",
-      };
-
-      const user2 = {
-        email: "2@1",
-        password: "1",
-      };
-
       const userTelegram1 = {
         name: "test1",
         chatId: 1001,
@@ -463,10 +437,10 @@ describe("Backend Tests", () => {
       });
 
       it("should POST facility if user is logged in on the website and there are booked slots of the chosen facility", async () => {
-        await agent.post("/login").send(user1);
+        await agent.post("/login").send(existingUser1);
         await agent.post("/book").send(booking1ForUser1);
         await agent.get("/logout");
-        await agent.post("/login").send(user2);
+        await agent.post("/login").send(existingUser2);
         await agent.post("/book").send(booking1ForUser2);
         const res = await agent
           .post("/bookedSlots")
@@ -482,10 +456,10 @@ describe("Backend Tests", () => {
       });
 
       it("should POST facility if user is logged in on the website and there are no booked slots of the chosen facility", async () => {
-        await agent.post("/login").send(user1);
+        await agent.post("/login").send(existingUser1);
         await agent.post("/book").send(booking1ForUser1);
         await agent.get("/logout");
-        await agent.post("/login").send(user2);
+        await agent.post("/login").send(existingUser2);
         await agent.post("/book").send(booking1ForUser2);
         const res = await agent
           .post("/bookedSlots")
@@ -497,11 +471,11 @@ describe("Backend Tests", () => {
       });
 
       it("should POST facility if user is logged in on Telegram and there are booked slots of the chosen facility", async () => {
-        await agent.post("/login").send(user1);
+        await agent.post("/login").send(existingUser1);
         await agent.post("/telegram/login").send(userTelegram1);
         await agent.post("/book").send(booking1ForUser1);
         await agent.get("/logout");
-        await agent.post("/login").send(user2);
+        await agent.post("/login").send(existingUser2);
         await agent.post("/telegram/login").send(userTelegram2);
         await agent.post("/book").send(booking1ForUser2);
         const res = await agent
@@ -518,11 +492,11 @@ describe("Backend Tests", () => {
       });
 
       it("should POST facility if user is logged in on Telegram and there are no booked slots of the chosen facility", async () => {
-        await agent.post("/login").send(user1);
+        await agent.post("/login").send(existingUser1);
         await agent.post("/telegram/login").send(userTelegram1);
         await agent.post("/book").send(booking1ForUser1);
         await agent.get("/logout");
-        await agent.post("/login").send(user2);
+        await agent.post("/login").send(existingUser2);
         await agent.post("/telegram/login").send(userTelegram2);
         await agent.post("/book").send(booking1ForUser2);
         const res = await agent
@@ -535,10 +509,10 @@ describe("Backend Tests", () => {
       });
 
       it("should POST if no facility is given", async () => {
-        await agent.post("/login").send(user1);
+        await agent.post("/login").send(existingUser1);
         await agent.post("/book").send(booking1ForUser1);
         await agent.get("/logout");
-        await agent.post("/login").send(user2);
+        await agent.post("/login").send(existingUser2);
         await agent.post("/book").send(booking1ForUser2);
         await agent.post("/book").send(booking2ForUser2);
         const res = await agent.post("/bookedSlots");
@@ -561,8 +535,14 @@ describe("Backend Tests", () => {
       });
 
       afterEach(async () => {
-        await users.updateOne({ email: "1@1" }, { $unset: { chatId: "" } });
-        await users.updateOne({ email: "2@1" }, { $unset: { chatId: "" } });
+        await users.updateOne(
+          { email: "1@test.com" },
+          { $unset: { chatId: "" } }
+        );
+        await users.updateOne(
+          { email: "2@test.com" },
+          { $unset: { chatId: "" } }
+        );
         await bookings.deleteOne(booking1ForUser1);
         await bookings.deleteOne(booking1ForUser2);
         await bookings.deleteOne(booking2ForUser2);
@@ -571,7 +551,9 @@ describe("Backend Tests", () => {
     });
   });
 
-  after(() => {
+  after(async () => {
+    await users.deleteOne({ email: existingUser1.email });
+    await users.deleteOne({ email: existingUser2.email });
     mongoose.disconnect();
   });
 });
