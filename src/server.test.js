@@ -42,7 +42,7 @@ describe("Backend Tests", () => {
         expect(res).to.have.cookie("connect.sid");
       });
 
-      it("should not POST a user's email and passsword if they already exist", async () => {
+      it("should not POST if the user already exists", async () => {
         let res = await chai.request(server).post("/register").send(user);
         res = await chai.request(server).post("/register").send(user);
         expect(res).to.have.status(400);
@@ -86,7 +86,7 @@ describe("Backend Tests", () => {
         expect(res).to.have.cookie("connect.sid");
       });
 
-      it("should not POST a user's email and password if they do not have an account", async () => {
+      it("should not POST if they do not have an account", async () => {
         const res = await chai
           .request(server)
           .post("/login")
@@ -95,13 +95,63 @@ describe("Backend Tests", () => {
         expect(res).to.have.status(401);
       });
 
-      it("should not POST a user's email and password if the password is wrong", async () => {
+      it("should not POST if the password is wrong", async () => {
         const res = await chai
           .request(server)
           .post("/login")
           .send(existingUserWrongPassword);
 
         expect(res).to.have.status(401);
+      });
+    });
+
+    describe("GET /isLoggedIn", async () => {
+      const existingUser = {
+        email: "1@1",
+        password: "1",
+      };
+
+      const nonExistingUser = {
+        email: "e0000000X@u.nus.edu",
+        password: "123",
+      };
+
+      let agent;
+
+      beforeEach(() => {
+        agent = chai.request.agent(server);
+      });
+
+      it("should GET login status if user is logged in", async () => {
+        await agent.post("/login").send(existingUser);
+
+        const res = await agent.get("/isLoggedIn").send(existingUser);
+
+        expect(res).to.have.status(200);
+        expect(res).to.be.a("Object");
+        expect(res.body).to.have.property("authenticated").eql(true);
+      });
+
+      it("should GET login status if user is not logged in", async () => {
+        const res = await agent.get("/isLoggedIn").send(existingUser);
+
+        expect(res).to.have.status(200);
+        expect(res).to.be.a("Object");
+        expect(res.body).to.have.property("authenticated").eql(false);
+      });
+
+      it("should GET login status if user does not have an account", async () => {
+        await agent.post("/login").send(nonExistingUser);
+
+        const res = await agent.get("/isLoggedIn").send(nonExistingUser);
+
+        expect(res).to.have.status(200);
+        expect(res).to.be.a("Object");
+        expect(res.body).to.have.property("authenticated").eql(false);
+      });
+
+      afterEach(() => {
+        agent.close();
       });
     });
   });
