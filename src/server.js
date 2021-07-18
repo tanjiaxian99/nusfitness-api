@@ -227,7 +227,7 @@ app.get("/isLoggedIn", (req, res) => {
  * @apiName PostBook
  * @apiGroup Booking
  *
- * @apiParam {String} chatId Users Telegram ChatId
+ * @apiParam {Number} chatId Users Telegram ChatId
  * @apiParam {String} facility Facility of the slot that is going to be booked
  * @apiParam {Object} date Date of the slot
  *
@@ -300,7 +300,7 @@ app.post("/book", async (req, res) => {
  * @apiName PostCancel
  * @apiGroup Booking
  *
- * @apiParam {String} chatId Users Telegram ChatId
+ * @apiParam {Number} chatId Users Telegram ChatId
  * @apiParam {String} facility Facility of the slot that is going to be cancelled
  * @apiParam {Object} date Date of the slot
  *
@@ -378,8 +378,8 @@ app.post("/cancel", async (req, res) => {
  * @apiGroup Booking
  *
  * @apiParam {String} facility Facility of the slots
- * @apiParam {String} startDate The start date to start searching for the slots
- * @apiParam {String} endDate The end date to stop searching for the slots
+ * @apiParam {Object} startDate The start date to start searching for the slots
+ * @apiParam {Object} endDate The end date to stop searching for the slots
  *
  * @apiSuccess {Object[]} slots Array of slots
  *
@@ -455,7 +455,7 @@ app.post("/slots", async (req, res) => {
  * @apiName PostBookedSlots
  * @apiGroup Booking
  *
- * @apiParam {String} chatId Users Telegram ChatId
+ * @apiParam {Number} chatId Users Telegram ChatId
  * @apiParam {String} facility Facility of the booked slots
  *
  * @apiSuccess {Object[]} slots Array of slots

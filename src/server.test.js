@@ -699,7 +699,7 @@ describe("Backend Tests", () => {
   });
 
   describe("Telegram", () => {
-    describe("POST /login", () => {
+    describe("POST /telegram/login", () => {
       let agent;
 
       beforeEach(() => {
@@ -723,6 +723,46 @@ describe("Backend Tests", () => {
           .send(existingUser1Telegram);
 
         expect(res).to.have.status(400);
+      });
+
+      afterEach(async () => {
+        await usersCollection.updateOne(
+          { email: "1@test.com" },
+          { $unset: { chatId: "" } }
+        );
+        agent.close();
+      });
+    });
+
+    describe("POST /telegram/isLoggedIn", () => {
+      let agent;
+
+      beforeEach(() => {
+        agent = chai.request.agent(server);
+      });
+
+      it("should POST chatId if user is logged in", async () => {
+        await agent.post("/login").send(existingUser1);
+        await agent.post("/telegram/login").send(existingUser1Telegram);
+        const res = await chai
+          .request(server)
+          .post("/telegram/isLoggedIn")
+          .send({ chatId: 1001 });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("success").eql(true);
+      });
+
+      it("should not POST chatId if user is not logged in", async () => {
+        const res = await chai
+          .request(server)
+          .post("/telegram/isLoggedIn")
+          .send({ chatId: 1001 });
+
+        expect(res).to.have.status(400);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("success").eql(false);
       });
 
       afterEach(async () => {

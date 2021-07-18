@@ -12,7 +12,7 @@ const db = mongoose.connection;
  * @apiGroup Telegram
  *
  * @apiParam {String} name Users Telegram name
- * @apiParam {String} chatId Users unique Telegram ChatId
+ * @apiParam {Number} chatId Users unique Telegram ChatId
  *
  * @apiSuccess {Object} success Success status of logging in
  *
@@ -80,7 +80,7 @@ router.post("/login", async (req, res) => {
  * @apiName PostIsLoggedIn
  * @apiGroup Telegram
  *
- * @apiParam {String} chatId Users unique Telegram ChatId
+ * @apiParam {Number} chatId Users unique Telegram ChatId
  *
  * @apiSuccess {Object} success Users logged in status
  *
@@ -88,6 +88,14 @@ router.post("/login", async (req, res) => {
  *     HTTP/1.1 200 Ok
  *     {
  *       "success": true
+ *     }
+ *
+ * @apiError UserNotFound User with the given chatID is not found
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "success": false,
  *     }
  *
  * @apiError MongoError Error raised by MongoDB
@@ -107,8 +115,13 @@ router.post("/isLoggedIn", async (req, res) => {
   try {
     const chatId = parseInt(req.body.chatId);
     const users = db.collection("users");
-    const res = await users.findOne({ chatId });
-    res.status(200).json({ success: true });
+    const result = await users.findOne({ chatId });
+    if (result) {
+      res.status(200).json({ success: true });
+    } else {
+      console.log(`User with chatId ${chatId} is not found.`);
+      res.status(400).json({ success: false });
+    }
   } catch (err) {
     console.log(err);
     res.status(400).json(err);
@@ -120,7 +133,7 @@ router.post("/isLoggedIn", async (req, res) => {
  * @apiName PostUpdateMenus
  * @apiGroup Telegram
  *
- * @apiParam {String} chatId Users unique Telegram ChatId
+ * @apiParam {Number} chatId Users unique Telegram ChatId
  * @apiParam {String} currentMenu Users current selected menu
  *
  * @apiSuccess {Object} success Success status updating users visited menus
@@ -192,7 +205,7 @@ router.post("/updateMenus", async (req, res) => {
  * @apiName PostGetPreviousMenu
  * @apiGroup Telegram
  *
- * @apiParam {String} chatId Users unique Telegram ChatId
+ * @apiParam {Number} chatId Users unique Telegram ChatId
  * @apiParam {Number} skips Number of menus to traverse back to
  *
  * @apiSuccess {Object} previousMenu Previous menu that the user visited
