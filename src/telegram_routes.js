@@ -277,6 +277,7 @@ router.get("/currentTraffic", async (req, res) => {
     if (traffic) {
       res.status(200).send(traffic);
     } else {
+      console.log("Traffic is undefined.");
       res.status(400);
     }
   } catch (err) {

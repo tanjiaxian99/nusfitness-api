@@ -1125,6 +1125,21 @@ describe("Backend Tests", () => {
         agent.close();
       });
     });
+
+    describe("GET /telegram/currentTraffic", () => {
+      it("should GET the current traffic", async () => {
+        const res = await chai.request(server).get("/telegram/currentTraffic");
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Array").with.length(6);
+        expect(res.body[0]).to.be.a("Number").lessThanOrEqual(40);
+        expect(res.body[1]).to.be.a("Number").lessThanOrEqual(40);
+        expect(res.body[2]).to.be.a("Number").lessThanOrEqual(40);
+        expect(res.body[3]).to.be.a("Number").lessThanOrEqual(40);
+        expect(res.body[4]).to.be.a("Number").lessThanOrEqual(40);
+        expect(res.body[5]).to.be.a("Number").lessThanOrEqual(40);
+      });
+    });
   });
 
   after(async () => {
