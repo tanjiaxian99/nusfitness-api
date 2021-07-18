@@ -11,6 +11,10 @@ describe("Backend Tests", () => {
   let trafficCollection;
   const existingUser1 = { email: "1@test.com", password: "1" };
   const existingUser2 = { email: "2@test.com", password: "2" };
+  const existingUser1Telegram = {
+    name: "test",
+    chatId: 1001,
+  };
 
   before(async () => {
     // Localhost
@@ -157,11 +161,6 @@ describe("Backend Tests", () => {
 
   describe("Booking", () => {
     describe("POST /book", () => {
-      const existingUserTelegram = {
-        name: "test",
-        chatId: 1001,
-      };
-
       const booking = {
         facility: "Wellness Outreach Gym",
         date: new Date(2021, 6, 17, 14, 00, 00, 00),
@@ -190,7 +189,7 @@ describe("Backend Tests", () => {
 
       it("should POST booking details if user is logged in on Telegram and slot can be booked", async () => {
         await agent.post("/login").send(existingUser1);
-        await agent.post("/telegram/login").send(existingUserTelegram);
+        await agent.post("/telegram/login").send(existingUser1Telegram);
         const res = await chai
           .request(server)
           .post("/book")
@@ -235,11 +234,6 @@ describe("Backend Tests", () => {
     });
 
     describe("POST /cancel", () => {
-      const existingUserTelegram = {
-        name: "test",
-        chatId: 1001,
-      };
-
       const booking = {
         facility: "Wellness Outreach Gym",
         date: new Date(2050, 6, 17, 14, 00, 00, 00),
@@ -276,7 +270,7 @@ describe("Backend Tests", () => {
 
       it("should POST booking details if user is logged in on Telegram and slot can be booked", async () => {
         await agent.post("/login").send(existingUser1);
-        await agent.post("/telegram/login").send(existingUserTelegram);
+        await agent.post("/telegram/login").send(existingUser1Telegram);
         await chai.request(server).post("/book").send(bookingTelegram);
         const res = await agent.post("/cancel").send(bookingTelegram);
 
@@ -556,7 +550,7 @@ describe("Backend Tests", () => {
   });
 
   describe("Traffic", () => {
-    describe.only("POST /traffic", () => {
+    describe("POST /traffic", () => {
       before(async () => {
         await trafficCollection.insertMany([
           {
@@ -700,6 +694,43 @@ describe("Backend Tests", () => {
             $lte: new Date(2021, 6, 16),
           },
         });
+      });
+    });
+  });
+
+  describe("Telegram", () => {
+    describe.only("POST /login", () => {
+      let agent;
+
+      beforeEach(() => {
+        agent = chai.request.agent(server);
+      });
+
+      it("should POST name and chatId if the user is logged in to the website", async () => {
+        await agent.post("/login").send(existingUser1);
+        const res = await agent
+          .post("/telegram/login")
+          .send(existingUser1Telegram);
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("success").eql(true);
+      });
+
+      it("should not POST name and chatId without logging in to the website", async () => {
+        const res = await agent
+          .post("/telegram/login")
+          .send(existingUser1Telegram);
+
+        expect(res).to.have.status(404);
+      });
+
+      afterEach(async () => {
+        await usersCollection.updateOne(
+          { email: "1@test.com" },
+          { $unset: { chatId: "" } }
+        );
+        agent.close();
       });
     });
   });

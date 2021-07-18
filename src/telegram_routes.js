@@ -41,32 +41,39 @@ const db = mongoose.connection;
  *       "ok":1
  *     }
  */
-router.post("/login", (req, res) => {
+router.post("/login", async (req, res) => {
   const name = req.body.name;
   const chatId = parseInt(req.body.chatId);
 
   // Send message to telegram bot
-  fetch(`https://api.telegram.org/bot${process.env.TOKEN}/sendMessage`, {
-    method: "post",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: `Welcome to NUSFitness ${name}! Your connection to @NUSFitness_Bot has been successful! Press /start to begin!`,
-      disable_notification: false,
-    }),
-  }).catch((err) => res.status(404).json(err));
+  try {
+    fetch(`https://api.telegram.org/bot${process.env.TOKEN}/sendMessage`, {
+      method: "post",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: `Welcome to NUSFitness ${name}! Your connection to @NUSFitness_Bot has been successful! Press /start to begin!`,
+        disable_notification: false,
+      }),
+    });
+  } catch (err) {
+    res.status(404).json(err);
+    return;
+  }
 
   // Update database with chatId
   const users = db.collection("users");
-  users
-    .updateOne(
+  try {
+    users.updateOne(
       { email: req.user.email },
       {
         $set: { chatId },
       }
-    )
-    .catch((err) => res.status(404).json(err));
-
+    );
+  } catch (err) {
+    res.status(404).json(err);
+    return;
+  }
   res.status(200).json({ success: true });
 });
 
