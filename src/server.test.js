@@ -699,7 +699,7 @@ describe("Backend Tests", () => {
   });
 
   describe("Telegram", () => {
-    describe.only("POST /login", () => {
+    describe("POST /login", () => {
       let agent;
 
       beforeEach(() => {
@@ -722,7 +722,7 @@ describe("Backend Tests", () => {
           .post("/telegram/login")
           .send(existingUser1Telegram);
 
-        expect(res).to.have.status(404);
+        expect(res).to.have.status(400);
       });
 
       afterEach(async () => {

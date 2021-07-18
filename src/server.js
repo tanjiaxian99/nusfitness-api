@@ -76,10 +76,19 @@ passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
 /** TELEGRAM HELPER METHODS */
-const getEmail = async (chatId) => {
-  const users = db.collection("users");
-  const user = await users.findOne({ chatId });
-  return user.email;
+const getEmail = async (req) => {
+  try {
+    if (req.isAuthenticated()) {
+      return req.user.email;
+    } else {
+      const users = db.collection("users");
+      const chatId = parseInt(req.body.chatId);
+      const user = await users.findOne({ chatId });
+      return user.email;
+    }
+  } catch (err) {
+    return undefined;
+  }
 };
 
 /** ROUTES */
@@ -256,12 +265,15 @@ app.get("/isLoggedIn", (req, res) => {
 app.post("/book", async (req, res) => {
   if (!req.isAuthenticated() && !req.body.chatId) {
     res.status(401).json({ success: false });
-  } else {
+    return;
+  }
+
+  try {
     const bookingCollection = db.collection("booking");
     const facility = req.body.facility;
     const date = new Date(req.body.date);
     const maxCapacity = 20;
-    let email;
+    const email = await getEmail(req);
 
     // Make sure count does not exceed max capacity in the event of multiple bookings
     const count = await bookingCollection.countDocuments({
@@ -269,27 +281,17 @@ app.post("/book", async (req, res) => {
       date,
     });
 
-    // Retrieve email
-    if (req.isAuthenticated()) {
-      email = req.user.email;
-    } else {
-      const chatId = parseInt(req.body.chatId);
-      email = await getEmail(chatId);
-    }
-
     if (count >= maxCapacity) {
       res.status(403).json({ success: false });
-    } else {
-      const booking = { email, facility, date };
-      bookingCollection.insertOne(booking, (error, result) => {
-        if (error) {
-          console.log(error);
-          res.status(400).json(error);
-        } else {
-          res.status(200).json({ success: true });
-        }
-      });
+      return;
     }
+
+    const booking = { email, facility, date };
+    await bookingCollection.insertOne(booking);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json(err);
   }
 });
 
@@ -336,8 +338,10 @@ app.post("/book", async (req, res) => {
 app.post("/cancel", async (req, res) => {
   if (!req.isAuthenticated() && !req.body.chatId) {
     res.status(401).json({ success: false });
-  } else {
-    let email;
+    return;
+  }
+  try {
+    const email = await getEmail(req);
     const facility = req.body.facility;
     const date = new Date(req.body.date);
 
@@ -347,14 +351,6 @@ app.post("/cancel", async (req, res) => {
     if (slotTime < currentTime) {
       res.status(403).json({ success: false });
       return;
-    }
-
-    // Retrieve email
-    if (req.isAuthenticated()) {
-      email = req.user.email;
-    } else {
-      const chatId = parseInt(req.body.chatId);
-      email = await getEmail(chatId);
     }
 
     // Slot can be cancelled
@@ -370,6 +366,9 @@ app.post("/cancel", async (req, res) => {
     } else {
       res.status(200).json({ success: true });
     }
+  } catch (err) {
+    console.log(err);
+    res.status(400).json(err);
   }
 });
 
@@ -415,15 +414,15 @@ app.post("/cancel", async (req, res) => {
  *     }
  */
 app.post("/slots", async (req, res) => {
-  const bookingCollection = db.collection("booking");
-  const now = new Date();
-  const facility = req.body.facility;
-  const startDate = new Date(req.body.startDate);
-  const endDate = req.body.endDate
-    ? new Date(req.body.endDate)
-    : new Date(dateFns.addDays(startDate, 1));
-
   try {
+    const bookingCollection = db.collection("booking");
+    const now = new Date();
+    const facility = req.body.facility;
+    const startDate = new Date(req.body.startDate);
+    const endDate = req.body.endDate
+      ? new Date(req.body.endDate)
+      : new Date(dateFns.addDays(startDate, 1));
+
     const aggregate = await bookingCollection.aggregate([
       {
         $project: {
@@ -446,6 +445,7 @@ app.post("/slots", async (req, res) => {
     ]);
     res.json(await aggregate.toArray());
   } catch (err) {
+    console.log(err);
     res.status(400).json(err);
   }
 });
@@ -501,48 +501,36 @@ app.post("/slots", async (req, res) => {
 app.post("/bookedSlots", async (req, res) => {
   if (!req.isAuthenticated() && !req.body.chatId) {
     res.status(401).json({ success: false });
-  } else {
+    return;
+  }
+
+  try {
+    const email = await getEmail(req);
     const facility = req.body.facility;
-    let email;
     const bookingCollection = db.collection("booking");
 
-    // Retrieve email
-    if (req.isAuthenticated()) {
-      email = req.user.email;
+    if (facility) {
+      const result = await bookingCollection
+        .find({
+          email,
+          facility,
+        })
+        .toArray();
+      res.json(result);
     } else {
-      const chatId = parseInt(req.body.chatId);
-      email = await getEmail(chatId);
-    }
-
-    facility
-      ? bookingCollection
-          .find({
+      const result = await bookingCollection
+        .find(
+          {
             email,
-            facility,
-          })
-          .toArray()
-          .then((result, error) => {
-            if (result) {
-              res.json(result);
-            } else {
-              res.status(400).json(error);
-            }
-          })
-      : bookingCollection
-          .find(
-            {
-              email,
-            },
-            { sort: [["date", -1]] }
-          )
-          .toArray()
-          .then((result, error) => {
-            if (result) {
-              res.json(result);
-            } else {
-              res.status(400).json(error);
-            }
-          });
+          },
+          { sort: [["date", -1]] }
+        )
+        .toArray();
+      res.json(result);
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(400).json(err);
   }
 });
 
@@ -600,23 +588,23 @@ app.post("/bookedSlots", async (req, res) => {
  *     }
  */
 app.post("/traffic", async (req, res) => {
-  const trafficCollection = db.collection("traffic");
-  const facility = req.body.facility;
-  const dateFilter = req.body.date;
-  let dayFilter = req.body.day;
-
-  // Convert date string to date object
-  if (dateFilter != undefined) {
-    Object.keys(dateFilter).map(
-      (key) => (dateFilter[key] = new Date(dateFilter[key]))
-    );
-  }
-
-  if (dayFilter == undefined) {
-    dayFilter = [];
-  }
-
   try {
+    const trafficCollection = db.collection("traffic");
+    const facility = req.body.facility;
+    const dateFilter = req.body.date;
+    let dayFilter = req.body.day;
+
+    // Convert date string to date object
+    if (dateFilter != undefined) {
+      Object.keys(dateFilter).map(
+        (key) => (dateFilter[key] = new Date(dateFilter[key]))
+      );
+    }
+
+    if (dayFilter == undefined) {
+      dayFilter = [];
+    }
+
     const aggregate = await trafficCollection.aggregate([
       {
         $project: {
@@ -690,13 +678,13 @@ const updateTrafficCollection = async () => {
     );
 
     // Update collection
-    const traffic = await requestTraffic();
-    const trafficCollection = db.collection("traffic");
-    trafficCollection.insertOne({ date, traffic }, (err, res) => {
-      if (err) {
-        console.log(err);
-      }
-    });
+    try {
+      const traffic = await requestTraffic();
+      const trafficCollection = db.collection("traffic");
+      trafficCollection.insertOne({ date, traffic });
+    } catch {
+      console.log(err);
+    }
   }
 
   // Set delay for next request
