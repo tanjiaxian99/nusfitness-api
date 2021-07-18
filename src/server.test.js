@@ -9,11 +9,16 @@ describe("Backend Tests", () => {
   let usersCollection;
   let bookingsCollection;
   let trafficCollection;
+  let telegramSessionsCollection;
   const existingUser1 = { email: "1@test.com", password: "1" };
   const existingUser2 = { email: "2@test.com", password: "2" };
   const existingUser1Telegram = {
-    name: "test",
+    name: "test1",
     chatId: 1001,
+  };
+  const existingUser2Telegram = {
+    name: "test2",
+    chatId: 1002,
   };
 
   before(async () => {
@@ -29,6 +34,7 @@ describe("Backend Tests", () => {
     usersCollection = db.collection("users");
     bookingsCollection = db.collection("booking");
     trafficCollection = db.collection("traffic");
+    telegramSessionsCollection = db.collection("telegram-sessions");
 
     await chai.request(server).post("/register").send(existingUser1);
     await chai.request(server).post("/register").send(existingUser2);
@@ -782,13 +788,13 @@ describe("Backend Tests", () => {
           .post("/telegram/updateMenus")
           .send({ chatId, currentMenu });
 
-      beforeEach(() => {
+      beforeEach(async () => {
         agent = chai.request.agent(server);
+        await agent.post("/login").send(existingUser1);
+        await agent.post("/telegram/login").send(existingUser1Telegram);
       });
 
       it("should POST chatId and currentMenu if the user is starting a new Telegram session", async () => {
-        await agent.post("/login").send(existingUser1);
-        await agent.post("/telegram/login").send(existingUser1Telegram);
         const res = await postUpdateMenu(1001, "Start");
 
         expect(res).to.have.status(200);
@@ -797,8 +803,6 @@ describe("Backend Tests", () => {
       });
 
       it("should POST chatId and currentMenu if the user continues from an existing session", async () => {
-        await agent.post("/login").send(existingUser1);
-        await agent.post("/telegram/login").send(existingUser1Telegram);
         await postUpdateMenu(1001, "Start");
         await postUpdateMenu(1001, "Booking");
         const res = await postUpdateMenu(1001, "BookedSlots");
@@ -809,8 +813,6 @@ describe("Backend Tests", () => {
       });
 
       it("should POST chatId and currentMenu if the user is starts a new session on top of an existing session", async () => {
-        await agent.post("/login").send(existingUser1);
-        await agent.post("/telegram/login").send(existingUser1Telegram);
         await postUpdateMenu(1001, "Start");
         await postUpdateMenu(1001, "Booking");
         await postUpdateMenu(1001, "BookedSlots");
@@ -822,8 +824,6 @@ describe("Backend Tests", () => {
       });
 
       it("should POST chatId and currentMenu if the user refreshes at the current menu", async () => {
-        await agent.post("/login").send(existingUser1);
-        await agent.post("/telegram/login").send(existingUser1Telegram);
         await postUpdateMenu(1001, "Start");
         await postUpdateMenu(1001, "Booking");
         await postUpdateMenu(1001, "BookedSlots");
@@ -841,8 +841,6 @@ describe("Backend Tests", () => {
       });
 
       it("should POST chatId and currentMenu if the user skips to 2 menus before", async () => {
-        await agent.post("/login").send(existingUser1);
-        await agent.post("/telegram/login").send(existingUser1Telegram);
         await postUpdateMenu(1001, "Start");
         await postUpdateMenu(1001, "Booking");
         await postUpdateMenu(1001, "BookedSlots");
@@ -868,8 +866,6 @@ describe("Backend Tests", () => {
       });
 
       it("should POST chatId and currentMenu if the user skips to the Start menu", async () => {
-        await agent.post("/login").send(existingUser1);
-        await agent.post("/telegram/login").send(existingUser1Telegram);
         await postUpdateMenu(1001, "Start");
         await postUpdateMenu(1001, "Booking");
         await postUpdateMenu(1001, "BookedSlots");
@@ -891,11 +887,241 @@ describe("Backend Tests", () => {
         expect(res.body).to.have.property("success").eql(true);
       });
 
+      it("should POST chatId and currentMenu if there is more than one user with a session", async () => {
+        await postUpdateMenu(1001, "Start");
+        await postUpdateMenu(1001, "Booking");
+        await postUpdateMenu(1001, "BookedSlots");
+        await postUpdateMenu(1001, "MakeAndCancel");
+        await postUpdateMenu(1001, "Kent Ridge Swimming Pool");
+        await postUpdateMenu(1001, "Kent Ridge Swimming Pool_Thu Jul 08 2021");
+        await postUpdateMenu(
+          1001,
+          "Kent Ridge Swimming Pool_Thu Jul 08 2021_2000"
+        );
+        await postUpdateMenu(
+          1001,
+          "Kent Ridge Swimming Pool_Thu Jul 08 2021_2000_Book"
+        );
+        await postUpdateMenu(1001, "Start");
+
+        await agent.get("/logout");
+        await agent.post("/login").send(existingUser2);
+        await agent.post("/telegram/login").send(existingUser2Telegram);
+        await postUpdateMenu(1002, "Start");
+        await postUpdateMenu(1002, "Booking");
+        await postUpdateMenu(1002, "BookedSlots");
+        const res = await postUpdateMenu(1002, "MakeAndCancel");
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("success").eql(true);
+      });
+
       afterEach(async () => {
         await usersCollection.updateOne(
           { email: "1@test.com" },
           { $unset: { chatId: "" } }
         );
+        agent.close();
+      });
+    });
+
+    describe("POST /telegram/getPreviousMenu", () => {
+      let agent;
+      const postUpdateMenu = async (chatId, currentMenu) =>
+        await chai
+          .request(server)
+          .post("/telegram/updateMenus")
+          .send({ chatId, currentMenu });
+
+      beforeEach(async () => {
+        agent = chai.request.agent(server);
+        await agent.post("/login").send(existingUser1);
+        await agent.post("/telegram/login").send(existingUser1Telegram);
+      });
+
+      it("should not POST chatId and skips if the user does not have a session yet", async () => {
+        const res = await agent
+          .post("/telegram/getPreviousMenu")
+          .send({ chatId: 1001, skips: 1 });
+
+        expect(res).to.have.status(400);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("previousMenu").eql(null);
+      });
+
+      it("should not POST chatId and skips if the user just started a new Telegram session", async () => {
+        await postUpdateMenu(1001, "Start");
+        const res = await agent
+          .post("/telegram/getPreviousMenu")
+          .send({ chatId: 1001, skips: 1 });
+
+        expect(res).to.have.status(400);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("previousMenu").eql(null);
+      });
+
+      it("should POST chatId and skips if the user is starts a new session on top of an existing session", async () => {
+        await postUpdateMenu(1001, "Start");
+        await postUpdateMenu(1001, "Booking");
+        await postUpdateMenu(1001, "BookedSlots");
+        await postUpdateMenu(1001, "MakeAndCancel");
+        await postUpdateMenu(1001, "Start");
+        await postUpdateMenu(1001, "Booking");
+        const res = await agent
+          .post("/telegram/getPreviousMenu")
+          .send({ chatId: 1001, skips: 1 });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("previousMenu").eql("Start");
+      });
+
+      it("should POST chatId and skips if the user wants a menu 2 skips away", async () => {
+        await postUpdateMenu(1001, "Start");
+        await postUpdateMenu(1001, "Booking");
+        await postUpdateMenu(1001, "BookedSlots");
+        await postUpdateMenu(1001, "MakeAndCancel");
+        const res = await agent
+          .post("/telegram/getPreviousMenu")
+          .send({ chatId: 1001, skips: 2 });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("previousMenu").eql("Booking");
+      });
+
+      it("should POST chatId and skips if the user wants a menu 3 skips away", async () => {
+        await postUpdateMenu(1001, "Start");
+        await postUpdateMenu(1001, "Booking");
+        await postUpdateMenu(1001, "BookedSlots");
+        await postUpdateMenu(1001, "MakeAndCancel");
+        await postUpdateMenu(1001, "Kent Ridge Swimming Pool");
+        const res = await agent
+          .post("/telegram/getPreviousMenu")
+          .send({ chatId: 1001, skips: 3 });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("previousMenu").eql("Booking");
+      });
+
+      it("should POST chatId and skips if the user refreshes at the current menu", async () => {
+        await postUpdateMenu(1001, "Start");
+        await postUpdateMenu(1001, "Booking");
+        await postUpdateMenu(1001, "BookedSlots");
+        await postUpdateMenu(1001, "MakeAndCancel");
+        await postUpdateMenu(1001, "Kent Ridge Swimming Pool");
+        await postUpdateMenu(1001, "Kent Ridge Swimming Pool_Thu Jul 08 2021");
+        await postUpdateMenu(1001, "Kent Ridge Swimming Pool_Thu Jul 08 2021");
+        const res = await agent
+          .post("/telegram/getPreviousMenu")
+          .send({ chatId: 1001, skips: 1 });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Object");
+        expect(res.body)
+          .to.have.property("previousMenu")
+          .eql("Kent Ridge Swimming Pool");
+      });
+
+      it("should POST chatId and skips if the user skips to 2 menus before", async () => {
+        await postUpdateMenu(1001, "Start");
+        await postUpdateMenu(1001, "Booking");
+        await postUpdateMenu(1001, "BookedSlots");
+        await postUpdateMenu(1001, "MakeAndCancel");
+        await postUpdateMenu(1001, "Kent Ridge Swimming Pool");
+        await postUpdateMenu(1001, "Kent Ridge Swimming Pool_Thu Jul 08 2021");
+        await postUpdateMenu(
+          1001,
+          "Kent Ridge Swimming Pool_Thu Jul 08 2021_2000"
+        );
+        await postUpdateMenu(
+          1001,
+          "Kent Ridge Swimming Pool_Thu Jul 08 2021_2000_Book"
+        );
+        await postUpdateMenu(1001, "Kent Ridge Swimming Pool_Thu Jul 08 2021");
+        const res = await agent
+          .post("/telegram/getPreviousMenu")
+          .send({ chatId: 1001, skips: 1 });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Object");
+        expect(res.body)
+          .to.have.property("previousMenu")
+          .eql("Kent Ridge Swimming Pool");
+      });
+
+      it("should not POST chatId and skips if the user skips to the Start menu", async () => {
+        await postUpdateMenu(1001, "Start");
+        await postUpdateMenu(1001, "Booking");
+        await postUpdateMenu(1001, "BookedSlots");
+        await postUpdateMenu(1001, "MakeAndCancel");
+        await postUpdateMenu(1001, "Kent Ridge Swimming Pool");
+        await postUpdateMenu(1001, "Kent Ridge Swimming Pool_Thu Jul 08 2021");
+        await postUpdateMenu(
+          1001,
+          "Kent Ridge Swimming Pool_Thu Jul 08 2021_2000"
+        );
+        await postUpdateMenu(
+          1001,
+          "Kent Ridge Swimming Pool_Thu Jul 08 2021_2000_Book"
+        );
+        await postUpdateMenu(1001, "Start");
+        const res = await agent
+          .post("/telegram/getPreviousMenu")
+          .send({ chatId: 1001, skips: 1 });
+
+        expect(res).to.have.status(400);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("previousMenu").eql(null);
+      });
+
+      it("should POST chatId and skips if there is more than one user with a session", async () => {
+        await postUpdateMenu(1001, "Start");
+        await postUpdateMenu(1001, "Booking");
+        await postUpdateMenu(1001, "BookedSlots");
+        await postUpdateMenu(1001, "MakeAndCancel");
+        await postUpdateMenu(1001, "Kent Ridge Swimming Pool");
+        await postUpdateMenu(1001, "Kent Ridge Swimming Pool_Thu Jul 08 2021");
+        await postUpdateMenu(
+          1001,
+          "Kent Ridge Swimming Pool_Thu Jul 08 2021_2000"
+        );
+        await postUpdateMenu(
+          1001,
+          "Kent Ridge Swimming Pool_Thu Jul 08 2021_2000_Book"
+        );
+        await postUpdateMenu(1001, "Start");
+
+        await agent.get("/logout");
+        await agent.post("/login").send(existingUser2);
+        await agent.post("/telegram/login").send(existingUser2Telegram);
+        await postUpdateMenu(1002, "Start");
+        await postUpdateMenu(1002, "Booking");
+        await postUpdateMenu(1002, "BookedSlots");
+        await postUpdateMenu(1002, "MakeAndCancel");
+        const res = await agent
+          .post("/telegram/getPreviousMenu")
+          .send({ chatId: 1002, skips: 1 });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("previousMenu").eql("BookedSlots");
+      });
+
+      afterEach(async () => {
+        await usersCollection.updateOne(
+          { email: "1@test.com" },
+          { $unset: { chatId: "" } }
+        );
+        await usersCollection.updateOne(
+          { email: "2@test.com" },
+          { $unset: { chatId: "" } }
+        );
+        await telegramSessionsCollection.deleteMany({
+          chatId: { $in: [1001, 1002] },
+        });
         agent.close();
       });
     });
