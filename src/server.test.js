@@ -615,7 +615,7 @@ describe("Backend Tests", () => {
       });
     });
 
-    describe.only("POST /updateCredits", () => {
+    describe("POST /updateCredits", () => {
       const newUser = {
         email: "3@test.com",
         password: "1",

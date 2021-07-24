@@ -71,7 +71,7 @@ router.post("/login", async (req, res) => {
 
     // Update credits collection with chatId
     const creditsCollection = db.collection("credits");
-    await creditsColection.updateOne(
+    await creditsCollection.updateOne(
       { email: req.user.email },
       {
         $set: { chatId },
