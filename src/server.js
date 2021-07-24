@@ -537,6 +537,34 @@ app.post("/bookedSlots", async (req, res) => {
   }
 });
 
+/**
+ * @api {get} /creditsLeft Users credit count
+ * @apiName GetBookedSlots
+ * @apiGroup Booking
+ *
+ * @apiSuccess {Object} credits Number of credits left
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 Ok
+ *     {
+ *         credits: 6
+ *     }
+ *
+ * @apiError MongoError Error raised by MongoDB
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "name": "MongoError",
+ *       "err": "E11000 duplicate key error index: test.test.$country_1  dup key: { : \"XYZ\" }",
+ *       "code": 11000,
+ *       "n": 0,
+ *       "connectionId":10706,
+ *       "ok":1
+ *     }
+ *
+ * @apiUse UnauthorizedError
+ */
 app.get("/creditsLeft", async (req, res) => {
   if (!req.isAuthenticated() && !req.body.chatId) {
     res.status(401).json({ success: false });
@@ -554,6 +582,42 @@ app.get("/creditsLeft", async (req, res) => {
   }
 });
 
+/**
+ * @api {post} /updateCredits Decrement users credit count
+ * @apiName PostUpdateCredits
+ * @apiGroup Booking
+ *
+ * @apiSuccess {Object} success Success status of decrementing users credit count
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 Ok
+ *     {
+ *         success: true
+ *     }
+ *
+ * @apiError MongoError Error raised by MongoDB
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "name": "MongoError",
+ *       "err": "E11000 duplicate key error index: test.test.$country_1  dup key: { : \"XYZ\" }",
+ *       "code": 11000,
+ *       "n": 0,
+ *       "connectionId":10706,
+ *       "ok":1
+ *     }
+ *
+ * @apiError NoMoreCredits User has ran out of credits
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *         success: false
+ *     }
+ *
+ * @apiUse UnauthorizedError
+ */
 app.post("/updateCredits", async (req, res) => {
   if (!req.isAuthenticated() && !req.body.chatId) {
     res.status(401).json({ success: false });
