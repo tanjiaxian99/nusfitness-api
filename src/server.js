@@ -542,6 +542,8 @@ app.post("/bookedSlots", async (req, res) => {
  * @apiName GetBookedSlots
  * @apiGroup Booking
  *
+ * @apiParam {Number} chatId Users Telegram ChatId
+ *
  * @apiSuccess {Object} credits Number of credits left
  *
  * @apiSuccessExample Success-Response:
@@ -565,7 +567,7 @@ app.post("/bookedSlots", async (req, res) => {
  *
  * @apiUse UnauthorizedError
  */
-app.get("/creditsLeft", async (req, res) => {
+app.post("/creditsLeft", async (req, res) => {
   if (!req.isAuthenticated() && !req.body.chatId) {
     res.status(401).json({ success: false });
     return;
@@ -586,6 +588,8 @@ app.get("/creditsLeft", async (req, res) => {
  * @api {post} /updateCredits Decrement users credit count
  * @apiName PostUpdateCredits
  * @apiGroup Booking
+ *
+ * @apiParam {Number} chatId Users Telegram ChatId
  *
  * @apiSuccess {Object} success Success status of decrementing users credit count
  *

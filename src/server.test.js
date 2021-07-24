@@ -10,6 +10,7 @@ describe("Backend Tests", () => {
   let bookingsCollection;
   let trafficCollection;
   let telegramSessionsCollection;
+  let creditsCollection;
   const existingUser1 = { email: "1@test.com", password: "1" };
   const existingUser2 = { email: "2@test.com", password: "2" };
   const existingUser1Telegram = {
@@ -35,6 +36,7 @@ describe("Backend Tests", () => {
     bookingsCollection = db.collection("booking");
     trafficCollection = db.collection("traffic");
     telegramSessionsCollection = db.collection("telegram-sessions");
+    creditsCollection = db.collection("credits");
 
     await chai.request(server).post("/register").send(existingUser1);
     await chai.request(server).post("/register").send(existingUser2);
@@ -550,6 +552,65 @@ describe("Backend Tests", () => {
         await bookingsCollection.deleteOne(booking1ForUser1);
         await bookingsCollection.deleteOne(booking1ForUser2);
         await bookingsCollection.deleteOne(booking2ForUser2);
+        agent.close();
+      });
+    });
+
+    describe.only("GET /creditsLeft", () => {
+      const newUser = {
+        email: "3@test.com",
+        password: "1",
+      };
+
+      const newUserTelegram = {
+        name: "test3",
+        chatId: 1003,
+      };
+
+      beforeEach(() => {
+        agent = chai.request.agent(server);
+      });
+
+      it("should POST and return credits left if user is logged in to the website", async () => {
+        await agent.post("/register").send(newUser);
+        const res = await agent.post("/creditsLeft");
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("credits").eql(6);
+      });
+
+      it("should POST and return credits left if user is logged in to Telegram", async () => {
+        await agent.post("/register").send(newUser);
+        await agent.post("/telegram/login").send(newUserTelegram);
+        const res = await agent.post("/creditsLeft").send({ chatId: 1003 });
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("credits").eql(6);
+      });
+
+      it("should not POST if the user does not have an account", async () => {
+        const res = await agent.post("/creditsLeft").send();
+
+        expect(res).to.have.status(401);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("success").eql(false);
+      });
+
+      it("should not POST if user is not logged in on the website or Telegram", async () => {
+        await agent.post("/register").send(newUser);
+        await agent.get("/logout");
+        const res = await agent.post("/creditsLeft").send();
+
+        expect(res).to.have.status(401);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("success").eql(false);
+      });
+
+      afterEach(async () => {
+        await usersCollection.deleteOne({ email: newUser.email });
+        await creditsCollection.deleteOne({ email: newUser.email });
         agent.close();
       });
     });
@@ -1145,6 +1206,8 @@ describe("Backend Tests", () => {
   after(async () => {
     await usersCollection.deleteOne({ email: existingUser1.email });
     await usersCollection.deleteOne({ email: existingUser2.email });
+    await creditsCollection.deleteOne({ email: existingUser1.email });
+    await creditsCollection.deleteOne({ email: existingUser2.email });
     mongoose.disconnect();
   });
 });
