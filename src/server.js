@@ -155,6 +155,9 @@ app.post("/register", async (req, res) => {
       console.log(err);
     });
     res.json(newUser);
+
+    const creditsCollection = db.collection("credits");
+    await creditsCollection.insertOne({ email, credits: 6 });
   } catch (err) {
     console.log(err);
     res.status(400).json(err);
@@ -534,6 +537,53 @@ app.post("/bookedSlots", async (req, res) => {
   }
 });
 
+app.get("/creditsLeft", async (req, res) => {
+  if (!req.isAuthenticated() && !req.body.chatId) {
+    res.status(401).json({ success: false });
+    return;
+  }
+
+  try {
+    const email = await getEmail(req);
+    const creditCollection = db.collection("credits");
+    const user = await creditCollection.findOne({ email });
+    res.json({ credits: user.credits });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json(err);
+  }
+});
+
+app.post("/updateCredits", async (req, res) => {
+  if (!req.isAuthenticated() && !req.body.chatId) {
+    res.status(401).json({ success: false });
+    return;
+  }
+
+  try {
+    const email = await getEmail(req);
+    const creditCollection = db.collection("credits");
+
+    // Unable to deduct credit if the user does not have any left
+    const user = await creditCollection.findOne({ email });
+    if (user.credits <= 0) {
+      res.status(400).json({ success: false });
+      return;
+    }
+
+    await creditCollection.updateOne(
+      { email },
+      {
+        $inc: { credits: -1 },
+      }
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json(err);
+  }
+});
+
 /**
  * @api {post} /traffic Historical traffic
  * @apiName PostTraffic
@@ -660,6 +710,33 @@ app.post("/traffic", async (req, res) => {
   }
 });
 
+/** AUTOMATED UPDATES TO DATABASE */
+
+// Updates credit collection every Sunday
+const updateCreditsCollection = async () => {
+  let now = new Date();
+  if (now.getDay == 0) {
+    try {
+      const creditsCollection = db.collection("credits");
+      await creditsCollection.updateMany(
+        {},
+        {
+          $set: { credits: 6 },
+        }
+      );
+    } catch {
+      console.log(err);
+    }
+  }
+
+  // Set delay for next request
+  now = new Date();
+  const msInADay = 1000 * 60 * 60 * 24;
+  const delay = msInADay - (now % msInADay);
+  setTimeout(updateCreditsCollection, delay);
+};
+updateCreditsCollection();
+
 // Updates traffic collection every 5 minutes
 const updateTrafficCollection = async () => {
   let now = new Date();
@@ -681,7 +758,7 @@ const updateTrafficCollection = async () => {
     try {
       const traffic = await requestTraffic();
       const trafficCollection = db.collection("traffic");
-      trafficCollection.insertOne({ date, traffic });
+      await trafficCollection.insertOne({ date, traffic });
     } catch {
       console.log(err);
     }

@@ -60,7 +60,7 @@ router.post("/login", async (req, res) => {
       }
     );
 
-    // Update database with chatId
+    // Update users collection with chatId
     const users = db.collection("users");
     await users.updateOne(
       { email: req.user.email },
@@ -68,6 +68,16 @@ router.post("/login", async (req, res) => {
         $set: { chatId },
       }
     );
+
+    // Update credits collection with chatId
+    const creditsCollection = db.collection("credits");
+    await creditsColection.updateOne(
+      { email: req.user.email },
+      {
+        $set: { chatId },
+      }
+    );
+
     res.status(200).json({ success: true });
   } catch (err) {
     console.log(err);
