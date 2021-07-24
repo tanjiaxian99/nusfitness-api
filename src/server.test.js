@@ -556,7 +556,7 @@ describe("Backend Tests", () => {
       });
     });
 
-    describe.only("GET /creditsLeft", () => {
+    describe("POST /creditsLeft", () => {
       const newUser = {
         email: "3@test.com",
         password: "1",
@@ -604,6 +604,105 @@ describe("Backend Tests", () => {
         const res = await agent.post("/creditsLeft").send();
 
         expect(res).to.have.status(401);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("success").eql(false);
+      });
+
+      afterEach(async () => {
+        await usersCollection.deleteOne({ email: newUser.email });
+        await creditsCollection.deleteOne({ email: newUser.email });
+        agent.close();
+      });
+    });
+
+    describe.only("POST /updateCredits", () => {
+      const newUser = {
+        email: "3@test.com",
+        password: "1",
+      };
+
+      const newUserTelegram = {
+        name: "test3",
+        chatId: 1003,
+      };
+
+      beforeEach(() => {
+        agent = chai.request.agent(server);
+      });
+
+      it("should POST and update credits left if user is logged in to the website", async () => {
+        await agent.post("/register").send(newUser);
+        const res1 = await agent.post("/updateCredits");
+        const res2 = await agent.post("/creditsLeft");
+
+        expect(res1).to.have.status(200);
+        expect(res1.body).to.be.a("Object");
+        expect(res1.body).to.have.property("success").eql(true);
+
+        expect(res2).to.have.status(200);
+        expect(res2.body).to.be.a("Object");
+        expect(res2.body).to.have.property("credits").eql(5);
+      });
+
+      it("should POST and return credits left if user is logged in to Telegram", async () => {
+        await agent.post("/register").send(newUser);
+        await agent.post("/telegram/login").send(newUserTelegram);
+        const res1 = await agent.post("/updateCredits").send({ chatId: 1003 });
+        const res2 = await agent.post("/creditsLeft").send({ chatId: 1003 });
+
+        expect(res1).to.have.status(200);
+        expect(res1.body).to.be.a("Object");
+        expect(res1.body).to.have.property("success").eql(true);
+
+        expect(res2).to.have.status(200);
+        expect(res2.body).to.be.a("Object");
+        expect(res2.body).to.have.property("credits").eql(5);
+      });
+
+      it("should not POST if the user does not have an account", async () => {
+        const res = await agent.post("/updateCredits").send();
+
+        expect(res).to.have.status(401);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("success").eql(false);
+      });
+
+      it("should not POST if user is not logged in on the website or Telegram", async () => {
+        await agent.post("/register").send(newUser);
+        await agent.get("/logout");
+        const res = await agent.post("/updateCredits").send();
+
+        expect(res).to.have.status(401);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("success").eql(false);
+      });
+
+      it("should POST and return credits left if user has booked 6 slots", async () => {
+        await agent.post("/register").send(newUser);
+        await agent.post("/updateCredits");
+        await agent.post("/updateCredits");
+        await agent.post("/updateCredits");
+        await agent.post("/updateCredits");
+        await agent.post("/updateCredits");
+        await agent.post("/updateCredits");
+        const res = await agent.post("/creditsLeft");
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("credits").eql(0);
+      });
+
+      it("should not POST if user has no more credits left", async () => {
+        await agent.post("/register").send(newUser);
+        await agent.post("/updateCredits");
+        await agent.post("/updateCredits");
+        await agent.post("/updateCredits");
+        await agent.post("/updateCredits");
+        await agent.post("/updateCredits");
+        await agent.post("/updateCredits");
+        const res = await agent.post("/updateCredits");
+
+        expect(res).to.have.status(400);
         expect(res.body).to.be.a("Object");
         expect(res.body).to.have.property("success").eql(false);
       });
