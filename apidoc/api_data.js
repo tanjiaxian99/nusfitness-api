@@ -5,6 +5,19 @@ define({ "api": [
     "title": "Users credit count",
     "name": "GetBookedSlots",
     "group": "Booking",
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "chatId",
+            "description": "<p>Users Telegram ChatId</p>"
+          }
+        ]
+      }
+    },
     "success": {
       "fields": {
         "Success 200": [
@@ -417,6 +430,19 @@ define({ "api": [
     "title": "Decrement users credit count",
     "name": "PostUpdateCredits",
     "group": "Booking",
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "chatId",
+            "description": "<p>Users Telegram ChatId</p>"
+          }
+        ]
+      }
+    },
     "success": {
       "fields": {
         "Success 200": [
