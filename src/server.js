@@ -225,6 +225,29 @@ app.get("/isLoggedIn", (req, res) => {
 });
 
 /**
+ * @api {get} /isLoggedIn Users profile information
+ * @apiName GetProfile
+ * @apiGroup Profile
+ *
+ * @apiSuccess {Object} authenticated Users profile informaiton
+ *
+ * @apiSuccessExample Success-Response:
+ *     HTTP/1.1 200 Ok
+ *     {
+ *       "_id": "60f0015f67cd8e43b0ec0b3c",
+ *       "email": "e0000000X@u.nus.edu"
+ *       "joined": "2021-07-15T09:35:27.083Z",
+ *     }
+ */
+app.get("/profile", (req, res) => {
+  if (req.isAuthenticated()) {
+    return res.json(req.user);
+  } else {
+    return res.status(404).json(undefined);
+  }
+});
+
+/**
  * @api {post} /book Book slot
  * @apiVersion 0.3.0
  * @apiName PostBook
