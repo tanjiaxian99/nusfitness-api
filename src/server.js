@@ -9,6 +9,7 @@ const cors = require("cors");
 const dateFns = require("date-fns");
 const telegram = require("./telegram_routes");
 const requestTraffic = require("./traffic");
+const wakeUpDyno = require("./wokeDyno.js");
 
 require("dotenv").config();
 
@@ -48,7 +49,7 @@ const sessionConfig = {
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
-    mongoUrl: "mongodb://localhost:27017/nusfitness",
+    mongoUrl: uri,
     collectionName: "sessions",
   }),
   cookie: {
@@ -833,4 +834,6 @@ const updateTrafficCollection = async () => {
 };
 updateTrafficCollection();
 
-app.listen(process.env.PORT || 5000);
+app.listen(process.env.PORT || 5000, () =>
+  wakeUpDyno("https://salty-reaches-24995.herokuapp.com/")
+);
