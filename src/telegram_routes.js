@@ -8,6 +8,7 @@ const db = mongoose.connection;
 
 /**
  * @api {post} /login Add Users ChatId
+ * @apiVersion 0.3.0
  * @apiName PostLogin
  * @apiGroup Telegram
  *
@@ -87,6 +88,7 @@ router.post("/login", async (req, res) => {
 
 /**
  * @api {post} /isLoggedIn Users Telegram logged in status
+ * @apiVersion 0.3.0
  * @apiName PostIsLoggedIn
  * @apiGroup Telegram
  *
@@ -140,6 +142,7 @@ router.post("/isLoggedIn", async (req, res) => {
 
 /**
  * @api {post} /updateMenus Update Users visited menus
+ * @apiVersion 0.3.0
  * @apiName PostUpdateMenus
  * @apiGroup Telegram
  *
@@ -212,6 +215,7 @@ router.post("/updateMenus", async (req, res) => {
 
 /**
  * @api {post} /getPreviousMenu Get users previous menu
+ * @apiVersion 0.3.0
  * @apiName PostGetPreviousMenu
  * @apiGroup Telegram
  *
@@ -267,6 +271,7 @@ router.post("/getPreviousMenu", async (req, res) => {
 
 /**
  * @api {get} /currentTraffic Get current traffic
+ * @apiVersion 0.3.0
  * @apiName GetCurrentTraffic
  * @apiGroup Telegram
  *

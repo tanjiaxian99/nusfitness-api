@@ -108,6 +108,7 @@ app.get("/", (req, res) => {
 
 /**
  * @api {post} /register Insert user information
+ * @apiVersion 0.3.0
  * @apiName PostRegister
  * @apiGroup Registration/Login
  *
@@ -161,6 +162,7 @@ app.post("/register", async (req, res) => {
 
 /**
  * @api {post} /login Login with user information
+ * @apiVersion 0.3.0
  * @apiName PostLogin
  * @apiGroup Registration/Login
  *
@@ -186,6 +188,7 @@ app.post("/login", passport.authenticate("local"), (req, res) => {
 
 /**
  * @api {get} /logout Logout the current user
+ * @apiVersion 0.3.0
  * @apiName GetLogout
  * @apiGroup Registration/Login
  *
@@ -204,6 +207,7 @@ app.get("/logout", (req, res) => {
 
 /**
  * @api {get} /isLoggedIn Users logged in status
+ * @apiVersion 0.3.0
  * @apiName GetIsLoggedIn
  * @apiGroup Registration/Login
  *
@@ -222,6 +226,7 @@ app.get("/isLoggedIn", (req, res) => {
 
 /**
  * @api {post} /book Book slot
+ * @apiVersion 0.3.0
  * @apiName PostBook
  * @apiGroup Booking
  *
@@ -295,6 +300,7 @@ app.post("/book", async (req, res) => {
 
 /**
  * @api {post} /cancel Delete booked slot
+ * @apiVersion 0.3.0
  * @apiName PostCancel
  * @apiGroup Booking
  *
@@ -372,6 +378,7 @@ app.post("/cancel", async (req, res) => {
 
 /**
  * @api {post} /slots Number of booked slots
+ * @apiVersion 0.3.0
  * @apiName PostSlots
  * @apiGroup Booking
  *
@@ -450,6 +457,7 @@ app.post("/slots", async (req, res) => {
 
 /**
  * @api {post} /bookedSlots Users booked slots
+ * @apiVersion 0.3.0
  * @apiName PostBookedSlots
  * @apiGroup Booking
  *
@@ -534,6 +542,7 @@ app.post("/bookedSlots", async (req, res) => {
 
 /**
  * @api {get} /creditsLeft Users credit count
+ * @apiVersion 0.3.0
  * @apiName GetBookedSlots
  * @apiGroup Booking
  *
@@ -581,6 +590,7 @@ app.post("/creditsLeft", async (req, res) => {
 
 /**
  * @api {post} /updateCredits Decrement users credit count
+ * @apiVersion 0.3.0
  * @apiName PostUpdateCredits
  * @apiGroup Booking
  *
@@ -649,6 +659,7 @@ app.post("/updateCredits", async (req, res) => {
 
 /**
  * @api {post} /traffic Historical traffic
+ * @apiVersion 0.3.0
  * @apiName PostTraffic
  * @apiGroup Traffic
  *

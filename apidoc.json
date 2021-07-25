@@ -1,6 +1,6 @@
 {
     "name": "NUSFitness",
-    "version": "1.0.0",
+    "version": "0.3.0",
     "description": "The better gym management system for all your workout needs",
     "title": "NUSFitness API",
     "url": "https://local.nusfitness.com:5000/"
