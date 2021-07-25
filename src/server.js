@@ -226,7 +226,7 @@ app.get("/isLoggedIn", (req, res) => {
 
 /**
  * @api {get} /profile Users profile information
- * @apiVerson 0.3.0
+ * @apiVersion 0.3.0
  * @apiName GetProfile
  * @apiGroup Account
  *
