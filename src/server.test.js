@@ -121,7 +121,7 @@ describe("Backend Tests", () => {
       });
     });
 
-    describe.only("GET /isLoggedIn", async () => {
+    describe("GET /isLoggedIn", async () => {
       const nonExistingUser = {
         email: "e0000000X@u.nus.edu",
         password: "123",
@@ -173,7 +173,7 @@ describe("Backend Tests", () => {
         agent = chai.request.agent(server);
       });
 
-      it("should GET logout status if a user is logged in", async () => {
+      it("should GET logout status if user is logged in", async () => {
         await agent.post("/login").send(existingUser1);
 
         const res = await agent.get("/logout");
@@ -181,6 +181,37 @@ describe("Backend Tests", () => {
         expect(res).to.have.status(200);
         expect(res.body).to.be.a("Object");
         expect(res.body).to.have.property("success").eql(true);
+      });
+
+      afterEach(() => {
+        agent.close();
+      });
+    });
+
+    describe("GET /profile", async () => {
+      let agent;
+
+      beforeEach(() => {
+        agent = chai.request.agent(server);
+      });
+
+      it("should GET user's profile if user is logged in", async () => {
+        await agent.post("/login").send(existingUser1);
+
+        const res = await agent.get("/profile");
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("_id");
+        expect(res.body).to.have.property("email").eql(existingUser1.email);
+        expect(res.body).to.have.property("joined");
+        expect(res.body).to.have.property("__v");
+      });
+
+      it("should not GET user's profile if user is not logged in", async () => {
+        const res = await agent.get("/profile");
+
+        expect(res).to.have.status(400);
       });
 
       afterEach(() => {
@@ -240,7 +271,7 @@ describe("Backend Tests", () => {
 
       it("should not POST booking details if the slot is full", async () => {
         const bookingArray = [];
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 40; i++) {
           bookingArray.push({ ...booking });
         }
         bookingsCollection.insertMany(bookingArray);
