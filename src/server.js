@@ -12,18 +12,12 @@ const requestTraffic = require("./traffic");
 
 require("dotenv").config();
 
-// Heroku
-// const uri = process.env.MONGODB_URI;
+const uri =
+  process.env.NODE_ENV === "development"
+    ? "mongodb://localhost:27017/nusfitness"
+    : "process.env.MONGODB_URI";
 
-// mongoose.connect(uri, {
-// 	useNewUrlParser: true,
-// 	useUnifiedTopology: true,
-// 	useCreateIndex: true,
-// 	useFindAndModify: false
-// })
-
-// Localhost
-mongoose.connect("mongodb://localhost:27017/nusfitness", {
+mongoose.connect(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useCreateIndex: true,
