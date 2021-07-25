@@ -275,7 +275,7 @@ app.post("/book", async (req, res) => {
     const bookingCollection = db.collection("booking");
     const facility = req.body.facility;
     const date = new Date(req.body.date);
-    const maxCapacity = 20;
+    const maxCapacity = 40;
     const email = await getEmail(req);
 
     // Make sure count does not exceed max capacity in the event of multiple bookings
