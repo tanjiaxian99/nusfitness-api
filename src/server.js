@@ -110,7 +110,7 @@ app.get("/", (req, res) => {
  * @api {post} /register Insert user information
  * @apiVersion 0.3.0
  * @apiName PostRegister
- * @apiGroup Registration/Login
+ * @apiGroup Account
  *
  * @apiParam {String} email Unique email of the user
  * @apiParam {String} password Login password of the user
@@ -164,7 +164,7 @@ app.post("/register", async (req, res) => {
  * @api {post} /login Login with user information
  * @apiVersion 0.3.0
  * @apiName PostLogin
- * @apiGroup Registration/Login
+ * @apiGroup Account
  *
  * @apiParam {String} email Unique email of the user
  * @apiParam {String} password Login password of the user
@@ -190,7 +190,7 @@ app.post("/login", passport.authenticate("local"), (req, res) => {
  * @api {get} /logout Logout the current user
  * @apiVersion 0.3.0
  * @apiName GetLogout
- * @apiGroup Registration/Login
+ * @apiGroup Account
  *
  * @apiSuccess {Boolean} success Success of logging out
  *
@@ -209,7 +209,7 @@ app.get("/logout", (req, res) => {
  * @api {get} /isLoggedIn Users logged in status
  * @apiVersion 0.3.0
  * @apiName GetIsLoggedIn
- * @apiGroup Registration/Login
+ * @apiGroup Account
  *
  * @apiSuccess {Boolean} authenticated Users logged in status
  *
@@ -225,25 +225,34 @@ app.get("/isLoggedIn", (req, res) => {
 });
 
 /**
- * @api {get} /isLoggedIn Users profile information
+ * @api {get} /profile Users profile information
+ * @apiVerson 0.3.0
  * @apiName GetProfile
- * @apiGroup Profile
+ * @apiGroup Account
  *
- * @apiSuccess {Object} authenticated Users profile informaiton
+ * @apiSuccess {Object} profile Users profile informaiton
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
  *     {
- *       "_id": "60f0015f67cd8e43b0ec0b3c",
- *       "email": "e0000000X@u.nus.edu"
- *       "joined": "2021-07-15T09:35:27.083Z",
+ *       "_id": "60fbb411378f67e054f16b2e",
+ *       "email": "1@u.nus.edu",
+ *       "joined": "2021-07-24T06:32:49.639Z",
+ *       "__v": 0,
+ *       "chatId": 432855735
  *     }
+ *
+ * @apiError UserNotFound The user's profile cannot be found
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     undefined
  */
 app.get("/profile", (req, res) => {
   if (req.isAuthenticated()) {
     return res.json(req.user);
   } else {
-    return res.status(404).json(undefined);
+    return res.status(400).json(undefined);
   }
 });
 
