@@ -583,9 +583,9 @@ app.post("/bookedSlots", async (req, res) => {
 });
 
 /**
- * @api {get} /creditsLeft Users credit count
+ * @api {post} /creditsLeft Users credit count
  * @apiVersion 0.3.0
- * @apiName GetBookedSlots
+ * @apiName PostCreditsLeft
  * @apiGroup Booking
  *
  * @apiParam {Number} chatId Users Telegram ChatId

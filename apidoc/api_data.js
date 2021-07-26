@@ -310,79 +310,6 @@ define({ "api": [
     "groupTitle": "Account"
   },
   {
-    "type": "get",
-    "url": "/creditsLeft",
-    "title": "Users credit count",
-    "version": "0.3.0",
-    "name": "GetBookedSlots",
-    "group": "Booking",
-    "parameter": {
-      "fields": {
-        "Parameter": [
-          {
-            "group": "Parameter",
-            "type": "Number",
-            "optional": false,
-            "field": "chatId",
-            "description": "<p>Users Telegram ChatId</p>"
-          }
-        ]
-      }
-    },
-    "success": {
-      "fields": {
-        "Success 200": [
-          {
-            "group": "Success 200",
-            "type": "Number",
-            "optional": false,
-            "field": "credits",
-            "description": "<p>Number of credits left</p>"
-          }
-        ]
-      },
-      "examples": [
-        {
-          "title": "Success-Response:",
-          "content": "HTTP/1.1 200 Ok\n{\n    credits: 6\n}",
-          "type": "json"
-        }
-      ]
-    },
-    "error": {
-      "fields": {
-        "Error 4xx": [
-          {
-            "group": "Error 4xx",
-            "optional": false,
-            "field": "MongoError",
-            "description": "<p>Error raised by MongoDB</p>"
-          },
-          {
-            "group": "Error 4xx",
-            "optional": false,
-            "field": "Unauthorized",
-            "description": "<p>The given email and password is unauthorized to login</p>"
-          }
-        ]
-      },
-      "examples": [
-        {
-          "title": "Error-Response:",
-          "content": "HTTP/1.1 400 Bad Request\n{\n  \"name\": \"MongoError\",\n  \"err\": \"E11000 duplicate key error index: test.test.$country_1  dup key: { : \\\"XYZ\\\" }\",\n  \"code\": 11000,\n  \"n\": 0,\n  \"connectionId\":10706,\n  \"ok\":1\n}",
-          "type": "json"
-        },
-        {
-          "title": "Error-Response:",
-          "content": "HTTP/1.1 401 Unauthorized\n{\n  \"success\": false\n}",
-          "type": "json"
-        }
-      ]
-    },
-    "filename": "src/server.js",
-    "groupTitle": "Booking"
-  },
-  {
     "type": "post",
     "url": "/book",
     "title": "Book slot",
@@ -667,6 +594,79 @@ define({ "api": [
         {
           "title": "Error-Response:",
           "content": "HTTP/1.1 403 Forbidden\n{\n  \"success\": false\n}",
+          "type": "json"
+        },
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 401 Unauthorized\n{\n  \"success\": false\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "src/server.js",
+    "groupTitle": "Booking"
+  },
+  {
+    "type": "post",
+    "url": "/creditsLeft",
+    "title": "Users credit count",
+    "version": "0.3.0",
+    "name": "PostCreditsLeft",
+    "group": "Booking",
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "chatId",
+            "description": "<p>Users Telegram ChatId</p>"
+          }
+        ]
+      }
+    },
+    "success": {
+      "fields": {
+        "Success 200": [
+          {
+            "group": "Success 200",
+            "type": "Number",
+            "optional": false,
+            "field": "credits",
+            "description": "<p>Number of credits left</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Success-Response:",
+          "content": "HTTP/1.1 200 Ok\n{\n    credits: 6\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "error": {
+      "fields": {
+        "Error 4xx": [
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "MongoError",
+            "description": "<p>Error raised by MongoDB</p>"
+          },
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "Unauthorized",
+            "description": "<p>The given email and password is unauthorized to login</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 400 Bad Request\n{\n  \"name\": \"MongoError\",\n  \"err\": \"E11000 duplicate key error index: test.test.$country_1  dup key: { : \\\"XYZ\\\" }\",\n  \"code\": 11000,\n  \"n\": 0,\n  \"connectionId\":10706,\n  \"ok\":1\n}",
           "type": "json"
         },
         {
@@ -980,7 +980,7 @@ define({ "api": [
     "url": "/isLoggedIn",
     "title": "Users Telegram logged in status",
     "version": "0.3.0",
-    "name": "PostIsLoggedIn",
+    "name": "PostTelegramIsLoggedIn",
     "group": "Telegram",
     "parameter": {
       "fields": {
@@ -1053,7 +1053,7 @@ define({ "api": [
     "url": "/login",
     "title": "Add Users ChatId",
     "version": "0.3.0",
-    "name": "PostLogin",
+    "name": "PostTelegramLogin",
     "group": "Telegram",
     "parameter": {
       "fields": {

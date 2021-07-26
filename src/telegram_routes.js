@@ -9,7 +9,7 @@ const db = mongoose.connection;
 /**
  * @api {post} /login Add Users ChatId
  * @apiVersion 0.3.0
- * @apiName PostLogin
+ * @apiName PostTelegramLogin
  * @apiGroup Telegram
  *
  * @apiParam {String} name Users Telegram name
@@ -89,7 +89,7 @@ router.post("/login", async (req, res) => {
 /**
  * @api {post} /isLoggedIn Users Telegram logged in status
  * @apiVersion 0.3.0
- * @apiName PostIsLoggedIn
+ * @apiName PostTelegramIsLoggedIn
  * @apiGroup Telegram
  *
  * @apiParam {Number} chatId Users unique Telegram ChatId
