@@ -2,7 +2,7 @@ define({ "api": [
   {
     "type": "get",
     "url": "/isLoggedIn",
-    "title": "Users logged in status",
+    "title": "Users logged-in status",
     "version": "0.3.0",
     "name": "GetIsLoggedIn",
     "group": "Account",
@@ -14,7 +14,7 @@ define({ "api": [
             "type": "Boolean",
             "optional": false,
             "field": "authenticated",
-            "description": "<p>Users logged in status</p>"
+            "description": "<p>Users logged-in status</p>"
           }
         ]
       },
@@ -44,7 +44,7 @@ define({ "api": [
             "type": "Boolean",
             "optional": false,
             "field": "success",
-            "description": "<p>Success of logging out</p>"
+            "description": "<p>Success status from logging out</p>"
           }
         ]
       },
@@ -71,10 +71,38 @@ define({ "api": [
         "Success 200": [
           {
             "group": "Success 200",
-            "type": "Object",
+            "type": "String",
             "optional": false,
-            "field": "profile",
-            "description": "<p>Users profile informaiton</p>"
+            "field": "_id",
+            "description": "<p>Unique id of the user in the database</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "email",
+            "description": "<p>Unique email of the user</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "joined",
+            "description": "<p>Join date of the user</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "Number",
+            "optional": false,
+            "field": "__v",
+            "description": "<p>Version key of the user's document in the database</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "Number",
+            "optional": false,
+            "field": "chatId",
+            "description": "<p>Users Telegram ChatId</p>"
           }
         ]
       },
@@ -143,7 +171,7 @@ define({ "api": [
             "type": "Boolean",
             "optional": false,
             "field": "success",
-            "description": "<p>Success of logging in</p>"
+            "description": "<p>Success status from logging in</p>"
           }
         ]
       },
@@ -306,7 +334,7 @@ define({ "api": [
         "Success 200": [
           {
             "group": "Success 200",
-            "type": "Object",
+            "type": "Number",
             "optional": false,
             "field": "credits",
             "description": "<p>Number of credits left</p>"
@@ -393,10 +421,10 @@ define({ "api": [
         "Success 200": [
           {
             "group": "Success 200",
-            "type": "Object",
+            "type": "Boolean",
             "optional": false,
             "field": "success",
-            "description": "<p>Success status of booking the slot</p>"
+            "description": "<p>Success status of booking a slot</p>"
           }
         ]
       },
@@ -484,10 +512,31 @@ define({ "api": [
         "Success 200": [
           {
             "group": "Success 200",
-            "type": "Object[]",
+            "type": "String",
             "optional": false,
-            "field": "slots",
-            "description": "<p>Array of slots</p>"
+            "field": "_id",
+            "description": "<p>Unique id of the booked slot in the database</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "email",
+            "description": "<p>Email of the user who booked the slot</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "facility",
+            "description": "<p>Facility of the booked slot</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "date",
+            "description": "<p>Date and time of the booked slot</p>"
           }
         ]
       },
@@ -571,10 +620,10 @@ define({ "api": [
         "Success 200": [
           {
             "group": "Success 200",
-            "type": "Object",
+            "type": "Boolean",
             "optional": false,
             "field": "success",
-            "description": "<p>Success status of cancelling the slot</p>"
+            "description": "<p>Success status of cancelling a slot</p>"
           }
         ]
       },
@@ -669,10 +718,17 @@ define({ "api": [
         "Success 200": [
           {
             "group": "Success 200",
-            "type": "Object[]",
+            "type": "String",
             "optional": false,
-            "field": "slots",
-            "description": "<p>Array of slots</p>"
+            "field": "_id",
+            "description": "<p>Date and time of slot</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "Number",
+            "optional": false,
+            "field": "count",
+            "description": "<p>Number of booked slots</p>"
           }
         ]
       },
@@ -731,7 +787,7 @@ define({ "api": [
         "Success 200": [
           {
             "group": "Success 200",
-            "type": "Object",
+            "type": "Boolean",
             "optional": false,
             "field": "success",
             "description": "<p>Success status of decrementing users credit count</p>"
@@ -871,7 +927,7 @@ define({ "api": [
         "Success 200": [
           {
             "group": "Success 200",
-            "type": "Object",
+            "type": "String",
             "optional": false,
             "field": "previousMenu",
             "description": "<p>Previous menu that the user visited</p>"
@@ -944,10 +1000,10 @@ define({ "api": [
         "Success 200": [
           {
             "group": "Success 200",
-            "type": "Object",
+            "type": "Boolean",
             "optional": false,
             "field": "success",
-            "description": "<p>Users logged in status</p>"
+            "description": "<p>Users logged-in status</p>"
           }
         ]
       },
@@ -1024,7 +1080,7 @@ define({ "api": [
         "Success 200": [
           {
             "group": "Success 200",
-            "type": "Object",
+            "type": "Boolean",
             "optional": false,
             "field": "success",
             "description": "<p>Success status of logging in</p>"
@@ -1104,10 +1160,10 @@ define({ "api": [
         "Success 200": [
           {
             "group": "Success 200",
-            "type": "Object",
+            "type": "Boolean",
             "optional": false,
             "field": "success",
-            "description": "<p>Success status updating users visited menus</p>"
+            "description": "<p>Success status on updating users visited menus</p>"
           }
         ]
       },
@@ -1180,10 +1236,38 @@ define({ "api": [
         "Success 200": [
           {
             "group": "Success 200",
-            "type": "Object[]",
+            "type": "Object",
             "optional": false,
-            "field": "slots",
-            "description": "<p>Array of slots</p>"
+            "field": "_id",
+            "description": "<p>Time when the traffic was collected</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "hour",
+            "description": "<p>Hour when the traffic was collected</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "minute",
+            "description": "<p>Minute when the traffic was collected</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "date",
+            "description": "<p>Date when the traffic was collected</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "Number",
+            "optional": false,
+            "field": "count",
+            "description": "<p>Number of people in the facility</p>"
           }
         ]
       },
