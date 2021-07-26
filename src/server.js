@@ -780,7 +780,7 @@ app.post("/traffic", async (req, res) => {
         $project: {
           date: 1,
           traffic: 1,
-          day: { $dayOfWeek: "$date" }, // Add a new field for the day of the week
+          day: { $dayOfWeek: "$date", timezone: "+08" }, // Add a new field for the day of the week
         },
       },
       {
