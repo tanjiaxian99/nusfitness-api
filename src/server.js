@@ -169,7 +169,7 @@ app.post("/register", async (req, res) => {
  * @apiParam {String} email Unique email of the user
  * @apiParam {String} password Login password of the user
  *
- * @apiSuccess {Boolean} success Success of logging in
+ * @apiSuccess {Boolean} success Success status from logging in
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -192,7 +192,7 @@ app.post("/login", passport.authenticate("local"), (req, res) => {
  * @apiName GetLogout
  * @apiGroup Account
  *
- * @apiSuccess {Boolean} success Success of logging out
+ * @apiSuccess {Boolean} success Success status from logging out
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -206,12 +206,12 @@ app.get("/logout", (req, res) => {
 });
 
 /**
- * @api {get} /isLoggedIn Users logged in status
+ * @api {get} /isLoggedIn Users logged-in status
  * @apiVersion 0.3.0
  * @apiName GetIsLoggedIn
  * @apiGroup Account
  *
- * @apiSuccess {Boolean} authenticated Users logged in status
+ * @apiSuccess {Boolean} authenticated Users logged-in status
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -230,7 +230,11 @@ app.get("/isLoggedIn", (req, res) => {
  * @apiName GetProfile
  * @apiGroup Account
  *
- * @apiSuccess {Object} profile Users profile informaiton
+ * @apiSuccess {String} _id Unique id of the user in the database
+ * @apiSuccess {String} email Unique email of the user
+ * @apiSuccess {String} joined Join date of the user
+ * @apiSuccess {Number} __v Version key of the user's document in the database
+ * @apiSuccess {Number} chatId Users Telegram ChatId
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -266,7 +270,7 @@ app.get("/profile", (req, res) => {
  * @apiParam {String} facility Facility of the slot that is going to be booked
  * @apiParam {Object} date Date of the slot
  *
- * @apiSuccess {Object} success Success status of booking the slot
+ * @apiSuccess {Boolean} success Success status of booking a slot
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -340,7 +344,7 @@ app.post("/book", async (req, res) => {
  * @apiParam {String} facility Facility of the slot that is going to be cancelled
  * @apiParam {Object} date Date of the slot
  *
- * @apiSuccess {Object} success Success status of cancelling the slot
+ * @apiSuccess {Boolean} success Success status of cancelling a slot
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -418,7 +422,8 @@ app.post("/cancel", async (req, res) => {
  * @apiParam {Object} startDate The start date to start searching for the slots
  * @apiParam {Object} endDate The end date to stop searching for the slots
  *
- * @apiSuccess {Object[]} slots Array of slots
+ * @apiSuccess {String} _id Date and time of slot
+ * @apiSuccess {Number} count Number of booked slots
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -496,7 +501,10 @@ app.post("/slots", async (req, res) => {
  * @apiParam {Number} chatId Users Telegram ChatId
  * @apiParam {String} facility Facility of the booked slots
  *
- * @apiSuccess {Object[]} slots Array of slots
+ * @apiSuccess {String} _id Unique id of the booked slot in the database
+ * @apiSuccess {String} email Email of the user who booked the slot
+ * @apiSuccess {String} facility Facility of the booked slot
+ * @apiSuccess {String} date Date and time of the booked slot
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -580,7 +588,7 @@ app.post("/bookedSlots", async (req, res) => {
  *
  * @apiParam {Number} chatId Users Telegram ChatId
  *
- * @apiSuccess {Object} credits Number of credits left
+ * @apiSuccess {Number} credits Number of credits left
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -628,7 +636,7 @@ app.post("/creditsLeft", async (req, res) => {
  *
  * @apiParam {Number} chatId Users Telegram ChatId
  *
- * @apiSuccess {Object} success Success status of decrementing users credit count
+ * @apiSuccess {Boolean} success Success status of decrementing users credit count
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -699,7 +707,11 @@ app.post("/updateCredits", async (req, res) => {
  * @apiParam {Object} date Date range to filter by
  * @apiParam {Number[]} day Days to filter by
  *
- * @apiSuccess {Object[]} slots Array of slots
+ * @apiSuccess {Object} _id Time when the traffic was collected
+ * @apiSuccess {String} hour Hour when the traffic was collected
+ * @apiSuccess {String} minute Minute when the traffic was collected
+ * @apiSuccess {String} date Date when the traffic was collected
+ * @apiSuccess {Number} count Number of people in the facility
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok

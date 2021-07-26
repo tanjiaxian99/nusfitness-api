@@ -15,7 +15,7 @@ const db = mongoose.connection;
  * @apiParam {String} name Users Telegram name
  * @apiParam {Number} chatId Users unique Telegram ChatId
  *
- * @apiSuccess {Object} success Success status of logging in
+ * @apiSuccess {Boolean} success Success status of logging in
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -94,7 +94,7 @@ router.post("/login", async (req, res) => {
  *
  * @apiParam {Number} chatId Users unique Telegram ChatId
  *
- * @apiSuccess {Object} success Users logged in status
+ * @apiSuccess {Boolean} success Users logged-in status
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -149,7 +149,7 @@ router.post("/isLoggedIn", async (req, res) => {
  * @apiParam {Number} chatId Users unique Telegram ChatId
  * @apiParam {String} currentMenu Users current selected menu
  *
- * @apiSuccess {Object} success Success status updating users visited menus
+ * @apiSuccess {Boolean} success Success status on updating users visited menus
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -222,7 +222,7 @@ router.post("/updateMenus", async (req, res) => {
  * @apiParam {Number} chatId Users unique Telegram ChatId
  * @apiParam {Number} skips Number of menus to traverse back to
  *
- * @apiSuccess {Object} previousMenu Previous menu that the user visited
+ * @apiSuccess {String} previousMenu Previous menu that the user visited
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
