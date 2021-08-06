@@ -9,13 +9,14 @@ const cors = require("cors");
 const dateFns = require("date-fns");
 const telegram = require("./telegram_routes");
 const requestTraffic = require("./traffic");
+const wakeUpDyno = require("./wokeDyno.js");
 
 require("dotenv").config();
 
 const uri =
   process.env.NODE_ENV === "development"
     ? "mongodb://localhost:27017/nusfitness"
-    : "process.env.MONGODB_URI";
+    : process.env.MONGODB_URI;
 
 mongoose.connect(uri, {
   useNewUrlParser: true,
@@ -48,15 +49,17 @@ const sessionConfig = {
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
-    mongoUrl: "mongodb://localhost:27017/nusfitness",
+    mongoUrl: uri,
     collectionName: "sessions",
   }),
   cookie: {
-    secure: false,
+    secure: true,
     maxAge: 30 * 1000 * 60 * 60 * 24,
+    sameSite: "none",
   },
 };
 
+app.set("trust proxy", 1);
 app.use(session(sessionConfig));
 
 // Passport.js
@@ -107,8 +110,9 @@ app.get("/", (req, res) => {
 
 /**
  * @api {post} /register Insert user information
+ * @apiVersion 0.3.0
  * @apiName PostRegister
- * @apiGroup Registration/Login
+ * @apiGroup Account
  *
  * @apiParam {String} email Unique email of the user
  * @apiParam {String} password Login password of the user
@@ -160,13 +164,14 @@ app.post("/register", async (req, res) => {
 
 /**
  * @api {post} /login Login with user information
+ * @apiVersion 0.3.0
  * @apiName PostLogin
- * @apiGroup Registration/Login
+ * @apiGroup Account
  *
  * @apiParam {String} email Unique email of the user
  * @apiParam {String} password Login password of the user
  *
- * @apiSuccess {Boolean} success Success of logging in
+ * @apiSuccess {Boolean} success Success status from logging in
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -185,10 +190,11 @@ app.post("/login", passport.authenticate("local"), (req, res) => {
 
 /**
  * @api {get} /logout Logout the current user
+ * @apiVersion 0.3.0
  * @apiName GetLogout
- * @apiGroup Registration/Login
+ * @apiGroup Account
  *
- * @apiSuccess {Boolean} success Success of logging out
+ * @apiSuccess {Boolean} success Success status from logging out
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -202,11 +208,12 @@ app.get("/logout", (req, res) => {
 });
 
 /**
- * @api {get} /isLoggedIn Users logged in status
+ * @api {get} /isLoggedIn Users logged-in status
+ * @apiVersion 0.3.0
  * @apiName GetIsLoggedIn
- * @apiGroup Registration/Login
+ * @apiGroup Account
  *
- * @apiSuccess {Boolean} authenticated Users logged in status
+ * @apiSuccess {Boolean} authenticated Users logged-in status
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -220,30 +227,44 @@ app.get("/isLoggedIn", (req, res) => {
 });
 
 /**
- * @api {get} /isLoggedIn Users profile information
+ * @api {get} /profile Users profile information
+ * @apiVersion 0.3.0
  * @apiName GetProfile
- * @apiGroup Profile
+ * @apiGroup Account
  *
- * @apiSuccess {Object} authenticated Users profile informaiton
+ * @apiSuccess {String} _id Unique id of the user in the database
+ * @apiSuccess {String} email Unique email of the user
+ * @apiSuccess {String} joined Join date of the user
+ * @apiSuccess {Number} __v Version key of the user's document in the database
+ * @apiSuccess {Number} chatId Users Telegram ChatId
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
  *     {
- *       "_id": "60f0015f67cd8e43b0ec0b3c",
- *       "email": "e0000000X@u.nus.edu"
- *       "joined": "2021-07-15T09:35:27.083Z",
+ *       "_id": "60fbb411378f67e054f16b2e",
+ *       "email": "1@u.nus.edu",
+ *       "joined": "2021-07-24T06:32:49.639Z",
+ *       "__v": 0,
+ *       "chatId": 432855735
  *     }
+ *
+ * @apiError UserNotFound The user's profile cannot be found
+ *
+ * @apiErrorExample Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     undefined
  */
 app.get("/profile", (req, res) => {
   if (req.isAuthenticated()) {
     return res.json(req.user);
   } else {
-    return res.status(404).json(undefined);
+    return res.status(400).json(undefined);
   }
 });
 
 /**
  * @api {post} /book Book slot
+ * @apiVersion 0.3.0
  * @apiName PostBook
  * @apiGroup Booking
  *
@@ -251,7 +272,7 @@ app.get("/profile", (req, res) => {
  * @apiParam {String} facility Facility of the slot that is going to be booked
  * @apiParam {Object} date Date of the slot
  *
- * @apiSuccess {Object} success Success status of booking the slot
+ * @apiSuccess {Boolean} success Success status of booking a slot
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -317,6 +338,7 @@ app.post("/book", async (req, res) => {
 
 /**
  * @api {post} /cancel Delete booked slot
+ * @apiVersion 0.3.0
  * @apiName PostCancel
  * @apiGroup Booking
  *
@@ -324,7 +346,7 @@ app.post("/book", async (req, res) => {
  * @apiParam {String} facility Facility of the slot that is going to be cancelled
  * @apiParam {Object} date Date of the slot
  *
- * @apiSuccess {Object} success Success status of cancelling the slot
+ * @apiSuccess {Boolean} success Success status of cancelling a slot
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -394,6 +416,7 @@ app.post("/cancel", async (req, res) => {
 
 /**
  * @api {post} /slots Number of booked slots
+ * @apiVersion 0.3.0
  * @apiName PostSlots
  * @apiGroup Booking
  *
@@ -401,7 +424,8 @@ app.post("/cancel", async (req, res) => {
  * @apiParam {Object} startDate The start date to start searching for the slots
  * @apiParam {Object} endDate The end date to stop searching for the slots
  *
- * @apiSuccess {Object[]} slots Array of slots
+ * @apiSuccess {String} _id Date and time of slot
+ * @apiSuccess {Number} count Number of booked slots
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -472,13 +496,17 @@ app.post("/slots", async (req, res) => {
 
 /**
  * @api {post} /bookedSlots Users booked slots
+ * @apiVersion 0.3.0
  * @apiName PostBookedSlots
  * @apiGroup Booking
  *
  * @apiParam {Number} chatId Users Telegram ChatId
  * @apiParam {String} facility Facility of the booked slots
  *
- * @apiSuccess {Object[]} slots Array of slots
+ * @apiSuccess {String} _id Unique id of the booked slot in the database
+ * @apiSuccess {String} email Email of the user who booked the slot
+ * @apiSuccess {String} facility Facility of the booked slot
+ * @apiSuccess {String} date Date and time of the booked slot
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -555,13 +583,14 @@ app.post("/bookedSlots", async (req, res) => {
 });
 
 /**
- * @api {get} /creditsLeft Users credit count
- * @apiName GetBookedSlots
+ * @api {post} /creditsLeft Users credit count
+ * @apiVersion 0.3.0
+ * @apiName PostCreditsLeft
  * @apiGroup Booking
  *
  * @apiParam {Number} chatId Users Telegram ChatId
  *
- * @apiSuccess {Object} credits Number of credits left
+ * @apiSuccess {Number} credits Number of credits left
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -603,12 +632,13 @@ app.post("/creditsLeft", async (req, res) => {
 
 /**
  * @api {post} /updateCredits Decrement users credit count
+ * @apiVersion 0.3.0
  * @apiName PostUpdateCredits
  * @apiGroup Booking
  *
  * @apiParam {Number} chatId Users Telegram ChatId
  *
- * @apiSuccess {Object} success Success status of decrementing users credit count
+ * @apiSuccess {Boolean} success Success status of decrementing users credit count
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -671,6 +701,7 @@ app.post("/updateCredits", async (req, res) => {
 
 /**
  * @api {post} /traffic Historical traffic
+ * @apiVersion 0.3.0
  * @apiName PostTraffic
  * @apiGroup Traffic
  *
@@ -678,7 +709,11 @@ app.post("/updateCredits", async (req, res) => {
  * @apiParam {Object} date Date range to filter by
  * @apiParam {Number[]} day Days to filter by
  *
- * @apiSuccess {Object[]} slots Array of slots
+ * @apiSuccess {Object} _id Time when the traffic was collected
+ * @apiSuccess {String} hour Hour when the traffic was collected
+ * @apiSuccess {String} minute Minute when the traffic was collected
+ * @apiSuccess {String} date Date when the traffic was collected
+ * @apiSuccess {Number} count Number of people in the facility
  *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 Ok
@@ -745,7 +780,7 @@ app.post("/traffic", async (req, res) => {
         $project: {
           date: 1,
           traffic: 1,
-          day: { $dayOfWeek: "$date" }, // Add a new field for the day of the week
+          day: { $dayOfWeek: { date: "$date", timezone: "+08" } }, // Add a new field for the day of the week
         },
       },
       {
@@ -856,4 +891,6 @@ const updateTrafficCollection = async () => {
 };
 updateTrafficCollection();
 
-app.listen(process.env.PORT || 5000);
+app.listen(process.env.PORT || 5000, () =>
+  wakeUpDyno("https://salty-reaches-24995.herokuapp.com/")
+);

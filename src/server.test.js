@@ -42,7 +42,7 @@ describe("Backend Tests", () => {
     await chai.request(server).post("/register").send(existingUser2);
   });
 
-  describe("Registration/Login", () => {
+  describe("Account", () => {
     describe("POST /register", () => {
       const user = {
         email: "e0000000X@u.nus.edu",
@@ -136,7 +136,7 @@ describe("Backend Tests", () => {
       it("should GET login status if user is logged in", async () => {
         await agent.post("/login").send(existingUser1);
 
-        const res = await agent.get("/isLoggedIn").send(existingUser1);
+        const res = await agent.get("/isLoggedIn");
 
         expect(res).to.have.status(200);
         expect(res.body).to.be.a("Object");
@@ -144,7 +144,7 @@ describe("Backend Tests", () => {
       });
 
       it("should GET login status if user is not logged in", async () => {
-        const res = await agent.get("/isLoggedIn").send(existingUser1);
+        const res = await agent.get("/isLoggedIn");
 
         expect(res).to.have.status(200);
         expect(res.body).to.be.a("Object");
@@ -154,11 +154,64 @@ describe("Backend Tests", () => {
       it("should GET login status if user does not have an account", async () => {
         await agent.post("/login").send(nonExistingUser);
 
-        const res = await agent.get("/isLoggedIn").send(nonExistingUser);
+        const res = await agent.get("/isLoggedIn");
 
         expect(res).to.have.status(200);
         expect(res.body).to.be.a("Object");
         expect(res.body).to.have.property("authenticated").eql(false);
+      });
+
+      afterEach(() => {
+        agent.close();
+      });
+    });
+
+    describe("GET /logout", async () => {
+      let agent;
+
+      beforeEach(() => {
+        agent = chai.request.agent(server);
+      });
+
+      it("should GET logout status if user is logged in", async () => {
+        await agent.post("/login").send(existingUser1);
+
+        const res = await agent.get("/logout");
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("success").eql(true);
+      });
+
+      afterEach(() => {
+        agent.close();
+      });
+    });
+
+    describe("GET /profile", async () => {
+      let agent;
+
+      beforeEach(() => {
+        agent = chai.request.agent(server);
+      });
+
+      it("should GET user's profile if user is logged in", async () => {
+        await agent.post("/login").send(existingUser1);
+
+        const res = await agent.get("/profile");
+
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.a("Object");
+        expect(res.body).to.have.property("_id");
+        expect(res.body).to.have.property("email").eql(existingUser1.email);
+        expect(res.body).to.have.property("joined");
+        expect(res.body).to.have.property("__v");
+      });
+
+      it("should not GET user's profile if user is not logged in", async () => {
+        const res = await agent.get("/profile");
+
+        expect(res).to.have.status(400);
       });
 
       afterEach(() => {
@@ -218,7 +271,7 @@ describe("Backend Tests", () => {
 
       it("should not POST booking details if the slot is full", async () => {
         const bookingArray = [];
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 40; i++) {
           bookingArray.push({ ...booking });
         }
         bookingsCollection.insertMany(bookingArray);

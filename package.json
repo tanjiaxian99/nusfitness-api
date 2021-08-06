@@ -1,9 +1,10 @@
 {
   "name": "nusfitness-api",
-  "version": "1.0.0",
+  "version": "0.3.0",
   "description": "",
   "main": "server.js",
   "scripts": {
+    "start": "node src/server.js",
     "test": "mocha src/*.test.js --timeout 10000",
     "dev": "nodemon src/server.js"
   },
