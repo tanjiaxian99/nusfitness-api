@@ -1,0 +1,1304 @@
+define({ "api": [
+  {
+    "type": "get",
+    "url": "/isLoggedIn",
+    "title": "Users logged-in status",
+    "version": "0.3.0",
+    "name": "GetIsLoggedIn",
+    "group": "Account",
+    "success": {
+      "fields": {
+        "Success 200": [
+          {
+            "group": "Success 200",
+            "type": "Boolean",
+            "optional": false,
+            "field": "authenticated",
+            "description": "<p>Users logged-in status</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Success-Response:",
+          "content": "HTTP/1.1 200 Ok\n{\n  \"authenticated\": true\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "src/server.js",
+    "groupTitle": "Account"
+  },
+  {
+    "type": "get",
+    "url": "/logout",
+    "title": "Logout the current user",
+    "version": "0.3.0",
+    "name": "GetLogout",
+    "group": "Account",
+    "success": {
+      "fields": {
+        "Success 200": [
+          {
+            "group": "Success 200",
+            "type": "Boolean",
+            "optional": false,
+            "field": "success",
+            "description": "<p>Success status from logging out</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Success-Response:",
+          "content": "HTTP/1.1 200 Ok\n{\n  \"success\": true\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "src/server.js",
+    "groupTitle": "Account"
+  },
+  {
+    "type": "get",
+    "url": "/profile",
+    "title": "Users profile information",
+    "version": "0.3.0",
+    "name": "GetProfile",
+    "group": "Account",
+    "success": {
+      "fields": {
+        "Success 200": [
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "_id",
+            "description": "<p>Unique id of the user in the database</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "email",
+            "description": "<p>Unique email of the user</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "joined",
+            "description": "<p>Join date of the user</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "Number",
+            "optional": false,
+            "field": "__v",
+            "description": "<p>Version key of the user's document in the database</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "Number",
+            "optional": false,
+            "field": "chatId",
+            "description": "<p>Users Telegram ChatId</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Success-Response:",
+          "content": "HTTP/1.1 200 Ok\n{\n  \"_id\": \"60fbb411378f67e054f16b2e\",\n  \"email\": \"1@u.nus.edu\",\n  \"joined\": \"2021-07-24T06:32:49.639Z\",\n  \"__v\": 0,\n  \"chatId\": 432855735\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "error": {
+      "fields": {
+        "Error 4xx": [
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "UserNotFound",
+            "description": "<p>The user's profile cannot be found</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 400 Bad Request\nundefined",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "src/server.js",
+    "groupTitle": "Account"
+  },
+  {
+    "type": "post",
+    "url": "/login",
+    "title": "Login with user information",
+    "version": "0.3.0",
+    "name": "PostLogin",
+    "group": "Account",
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "String",
+            "optional": false,
+            "field": "email",
+            "description": "<p>Unique email of the user</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "String",
+            "optional": false,
+            "field": "password",
+            "description": "<p>Login password of the user</p>"
+          }
+        ]
+      }
+    },
+    "success": {
+      "fields": {
+        "Success 200": [
+          {
+            "group": "Success 200",
+            "type": "Boolean",
+            "optional": false,
+            "field": "success",
+            "description": "<p>Success status from logging in</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Success-Response:",
+          "content": "HTTP/1.1 200 Ok\n{\n  \"success\": true\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "error": {
+      "fields": {
+        "Error 4xx": [
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "Unauthorized",
+            "description": "<p>The given email and password is unauthorized to login</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 401 Unauthorized",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "src/server.js",
+    "groupTitle": "Account"
+  },
+  {
+    "type": "post",
+    "url": "/register",
+    "title": "Insert user information",
+    "version": "0.3.0",
+    "name": "PostRegister",
+    "group": "Account",
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "String",
+            "optional": false,
+            "field": "email",
+            "description": "<p>Unique email of the user</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "String",
+            "optional": false,
+            "field": "password",
+            "description": "<p>Login password of the user</p>"
+          }
+        ]
+      }
+    },
+    "success": {
+      "fields": {
+        "Success 200": [
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "_id",
+            "description": "<p>Unique id of the user in the database</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "email",
+            "description": "<p>Unique email of the user</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "joined",
+            "description": "<p>Join date of the user</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "salt",
+            "description": "<p>Salt associated with the hashed password of the user</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "hash",
+            "description": "<p>Hashed password of the user</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "Number",
+            "optional": false,
+            "field": "__v",
+            "description": "<p>Version key of the user's document in the database</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Success-Response:",
+          "content": "HTTP/1.1 200 Ok\n{\n  \"_id\": \"60f0015f67cd8e43b0ec0b3c\",\n  \"email\": \"e0000000X@u.nus.edu\"\n  \"joined\": \"2021-07-15T09:35:27.083Z\",\n  \"salt\": \"a9038007db8f935bf78288ea8ae729336110e56866f6edb4010b3678abaf5cce\",\n  \"hash\": \"181ea7263b1a53b828952e44d6d0bdc113a6776d48e66e8922464b41e294fd034145b6ee313a87f8f15a1956b6365fe3a07941658efcba9756976e8083fe16e2a8d9b2ae2c572cb5edefb4205e1ba20ad96460777d9ddff50d0e76482bc208fcc6acb5ee2dad55906ff41303980c0baf84287406ac5086f6902fa0f045fcd7d40d0c929ed28ce21548aca9362ce42d4af21c1662412f5e1c75a9aeb0b8af226d704db7a343e0cb5c344fe0026361314cd5f5c01a3b86224377c154500fde4c00ba192a4918ac9dd11dbaea695a670741cb80368ee5840f768c4e7257463c02215e6e8f9c956e5abd86e0e0e4fbdbdaaadd4f7f214660aa670cac6adfa27c96bd5935ab99d41827612fb622600e17234364cd090307ecad05eb5eb1af0875bb7ac508042a88152162b3cb916633f255074a5fff6d334e239b8a7a4f1229ac6bb6c9551d3958ad7aca0dc4414fd2cf5b24a724fe34e22ea19c7ede544c1cc56827882e80d1c0c6fb810acf0817c0e32e20d48956044836b4d42b8769d04fe15e9ee32f65348a066085fbdb0cc072e8fc40862eea911b26dfa8ab092f47d65da55a9bbbf40c0afd3ac7a8aeb878b4f1459d93e100be410cdf9f5d3a017db43989c411c99bccd034a798d8a09a65b28697ac2be1c333d894b840ef829d74413548d31d173bca8f9bde55f8e697dbc1009eebcab6d6b457778c7ccda537c9f94e4b7e\"\n  \"__v\": 0\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "error": {
+      "fields": {
+        "Error 4xx": [
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "UserExistsError",
+            "description": "<p>A user with the given username is already registered</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 400 Bad Request\n{\n  \"name\": \"UserExistsError\",\n  \"message\": \"A user with the given username is already registered\"\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "src/server.js",
+    "groupTitle": "Account"
+  },
+  {
+    "type": "post",
+    "url": "/book",
+    "title": "Book slot",
+    "version": "0.3.0",
+    "name": "PostBook",
+    "group": "Booking",
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "chatId",
+            "description": "<p>Users Telegram ChatId</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "String",
+            "optional": false,
+            "field": "facility",
+            "description": "<p>Facility of the slot that is going to be booked</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "Object",
+            "optional": false,
+            "field": "date",
+            "description": "<p>Date of the slot</p>"
+          }
+        ]
+      }
+    },
+    "success": {
+      "fields": {
+        "Success 200": [
+          {
+            "group": "Success 200",
+            "type": "Boolean",
+            "optional": false,
+            "field": "success",
+            "description": "<p>Success status of booking a slot</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Success-Response:",
+          "content": "HTTP/1.1 200 Ok\n{\n  \"success\": true\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "error": {
+      "fields": {
+        "Error 4xx": [
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "MongoError",
+            "description": "<p>Error raised by MongoDB</p>"
+          },
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "SlotFull",
+            "description": "<p>The slot has reached maximum capacity and cannot be booked</p>"
+          },
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "Unauthorized",
+            "description": "<p>The given email and password is unauthorized to login</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 400 Bad Request\n{\n  \"name\": \"MongoError\",\n  \"err\": \"E11000 duplicate key error index: test.test.$country_1  dup key: { : \\\"XYZ\\\" }\",\n  \"code\": 11000,\n  \"n\": 0,\n  \"connectionId\":10706,\n  \"ok\":1\n}",
+          "type": "json"
+        },
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 403 Forbidden\n{\n  \"success\": false\n}",
+          "type": "json"
+        },
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 401 Unauthorized\n{\n  \"success\": false\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "src/server.js",
+    "groupTitle": "Booking"
+  },
+  {
+    "type": "post",
+    "url": "/bookedSlots",
+    "title": "Users booked slots",
+    "version": "0.3.0",
+    "name": "PostBookedSlots",
+    "group": "Booking",
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "chatId",
+            "description": "<p>Users Telegram ChatId</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "String",
+            "optional": false,
+            "field": "facility",
+            "description": "<p>Facility of the booked slots</p>"
+          }
+        ]
+      }
+    },
+    "success": {
+      "fields": {
+        "Success 200": [
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "_id",
+            "description": "<p>Unique id of the booked slot in the database</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "email",
+            "description": "<p>Email of the user who booked the slot</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "facility",
+            "description": "<p>Facility of the booked slot</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "date",
+            "description": "<p>Date and time of the booked slot</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Success-Response:",
+          "content": "HTTP/1.1 200 Ok\n[\n  {\n    \"_id\": \"60e1e713f72ceb4b84061666\",\n    \"email\": \"e0000000X@u.nus.edu\",\n    \"facility\": \"Kent Ridge Swimming Pool\",\n    \"date\": \"2021-07-05T23:30:00.000Z\"\n  },\n  {\n    \"_id\": \"60e495cb14d4dc01fcc2e767\",\n    \"email\": \"e0000000X@u.nus.edu\",\n    \"facility\": \"University Town Gym\",\n    \"date\": \"2021-07-08T03:00:00.000Z\"\n  },\n  {\n    \"_id\": \"60e542cf1c7c7a2540ad0e57\",\n    \"email\": \"e0000000X@u.nus.edu\",\n    \"facility\": \"University Sports Centre Gym\",\n    \"date\": \"2021-07-09T08:00:00.000Z\"\n  }\n]",
+          "type": "json"
+        }
+      ]
+    },
+    "error": {
+      "fields": {
+        "Error 4xx": [
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "MongoError",
+            "description": "<p>Error raised by MongoDB</p>"
+          },
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "Unauthorized",
+            "description": "<p>The given email and password is unauthorized to login</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 400 Bad Request\n{\n  \"name\": \"MongoError\",\n  \"err\": \"E11000 duplicate key error index: test.test.$country_1  dup key: { : \\\"XYZ\\\" }\",\n  \"code\": 11000,\n  \"n\": 0,\n  \"connectionId\":10706,\n  \"ok\":1\n}",
+          "type": "json"
+        },
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 401 Unauthorized\n{\n  \"success\": false\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "src/server.js",
+    "groupTitle": "Booking"
+  },
+  {
+    "type": "post",
+    "url": "/cancel",
+    "title": "Delete booked slot",
+    "version": "0.3.0",
+    "name": "PostCancel",
+    "group": "Booking",
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "chatId",
+            "description": "<p>Users Telegram ChatId</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "String",
+            "optional": false,
+            "field": "facility",
+            "description": "<p>Facility of the slot that is going to be cancelled</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "Object",
+            "optional": false,
+            "field": "date",
+            "description": "<p>Date of the slot</p>"
+          }
+        ]
+      }
+    },
+    "success": {
+      "fields": {
+        "Success 200": [
+          {
+            "group": "Success 200",
+            "type": "Boolean",
+            "optional": false,
+            "field": "success",
+            "description": "<p>Success status of cancelling a slot</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Success-Response:",
+          "content": "HTTP/1.1 200 Ok\n{\n  \"success\": true\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "error": {
+      "fields": {
+        "Error 4xx": [
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "MongoError",
+            "description": "<p>Error raised by MongoDB</p>"
+          },
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "TimeElapsed",
+            "description": "<p>The slot's time is within the 2 hours cancellation window and cannot be cancelled</p>"
+          },
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "Unauthorized",
+            "description": "<p>The given email and password is unauthorized to login</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 400 Bad Request\n{\n  \"name\": \"MongoError\",\n  \"err\": \"E11000 duplicate key error index: test.test.$country_1  dup key: { : \\\"XYZ\\\" }\",\n  \"code\": 11000,\n  \"n\": 0,\n  \"connectionId\":10706,\n  \"ok\":1\n}",
+          "type": "json"
+        },
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 403 Forbidden\n{\n  \"success\": false\n}",
+          "type": "json"
+        },
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 401 Unauthorized\n{\n  \"success\": false\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "src/server.js",
+    "groupTitle": "Booking"
+  },
+  {
+    "type": "post",
+    "url": "/creditsLeft",
+    "title": "Users credit count",
+    "version": "0.3.0",
+    "name": "PostCreditsLeft",
+    "group": "Booking",
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "chatId",
+            "description": "<p>Users Telegram ChatId</p>"
+          }
+        ]
+      }
+    },
+    "success": {
+      "fields": {
+        "Success 200": [
+          {
+            "group": "Success 200",
+            "type": "Number",
+            "optional": false,
+            "field": "credits",
+            "description": "<p>Number of credits left</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Success-Response:",
+          "content": "HTTP/1.1 200 Ok\n{\n    credits: 6\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "error": {
+      "fields": {
+        "Error 4xx": [
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "MongoError",
+            "description": "<p>Error raised by MongoDB</p>"
+          },
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "Unauthorized",
+            "description": "<p>The given email and password is unauthorized to login</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 400 Bad Request\n{\n  \"name\": \"MongoError\",\n  \"err\": \"E11000 duplicate key error index: test.test.$country_1  dup key: { : \\\"XYZ\\\" }\",\n  \"code\": 11000,\n  \"n\": 0,\n  \"connectionId\":10706,\n  \"ok\":1\n}",
+          "type": "json"
+        },
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 401 Unauthorized\n{\n  \"success\": false\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "src/server.js",
+    "groupTitle": "Booking"
+  },
+  {
+    "type": "post",
+    "url": "/slots",
+    "title": "Number of booked slots",
+    "version": "0.3.0",
+    "name": "PostSlots",
+    "group": "Booking",
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "String",
+            "optional": false,
+            "field": "facility",
+            "description": "<p>Facility of the slots</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "Object",
+            "optional": false,
+            "field": "startDate",
+            "description": "<p>The start date to start searching for the slots</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "Object",
+            "optional": false,
+            "field": "endDate",
+            "description": "<p>The end date to stop searching for the slots</p>"
+          }
+        ]
+      }
+    },
+    "success": {
+      "fields": {
+        "Success 200": [
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "_id",
+            "description": "<p>Date and time of slot</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "Number",
+            "optional": false,
+            "field": "count",
+            "description": "<p>Number of booked slots</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Success-Response:",
+          "content": "HTTP/1.1 200 Ok\n[\n  {\n    \"_id\": \"2021-07-09T08:00:00.000Z\",\n    \"count\": 1\n  },\n  {\n    \"_id\": \"2021-07-05T23:30:00.000Z\",\n    \"count\": 2\n  },\n  {\n    \"_id\": \"2021-07-08T05:00:00.000Z\",\n    \"count\": 4\n  },\n]",
+          "type": "json"
+        }
+      ]
+    },
+    "error": {
+      "fields": {
+        "Error 4xx": [
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "MongoError",
+            "description": "<p>Error raised by MongoDB</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 400 Bad Request\n{\n  \"name\": \"MongoError\",\n  \"err\": \"E11000 duplicate key error index: test.test.$country_1  dup key: { : \\\"XYZ\\\" }\",\n  \"code\": 11000,\n  \"n\": 0,\n  \"connectionId\":10706,\n  \"ok\":1\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "src/server.js",
+    "groupTitle": "Booking"
+  },
+  {
+    "type": "post",
+    "url": "/updateCredits",
+    "title": "Decrement users credit count",
+    "version": "0.3.0",
+    "name": "PostUpdateCredits",
+    "group": "Booking",
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "chatId",
+            "description": "<p>Users Telegram ChatId</p>"
+          }
+        ]
+      }
+    },
+    "success": {
+      "fields": {
+        "Success 200": [
+          {
+            "group": "Success 200",
+            "type": "Boolean",
+            "optional": false,
+            "field": "success",
+            "description": "<p>Success status of decrementing users credit count</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Success-Response:",
+          "content": "HTTP/1.1 200 Ok\n{\n    success: true\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "error": {
+      "fields": {
+        "Error 4xx": [
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "MongoError",
+            "description": "<p>Error raised by MongoDB</p>"
+          },
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "NoMoreCredits",
+            "description": "<p>User has ran out of credits</p>"
+          },
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "Unauthorized",
+            "description": "<p>The given email and password is unauthorized to login</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 400 Bad Request\n{\n  \"name\": \"MongoError\",\n  \"err\": \"E11000 duplicate key error index: test.test.$country_1  dup key: { : \\\"XYZ\\\" }\",\n  \"code\": 11000,\n  \"n\": 0,\n  \"connectionId\":10706,\n  \"ok\":1\n}",
+          "type": "json"
+        },
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 400 Bad Request\n{\n    success: false\n}",
+          "type": "json"
+        },
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 401 Unauthorized\n{\n  \"success\": false\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "src/server.js",
+    "groupTitle": "Booking"
+  },
+  {
+    "type": "get",
+    "url": "/currentTraffic",
+    "title": "Get current traffic",
+    "version": "0.3.0",
+    "name": "GetCurrentTraffic",
+    "group": "Telegram",
+    "success": {
+      "fields": {
+        "Success 200": [
+          {
+            "group": "Success 200",
+            "type": "Number[]",
+            "optional": false,
+            "field": "traffic",
+            "description": "<p>Traffic of all facilities at the time of request</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Success-Response:",
+          "content": "HTTP/1.1 200 Ok\n[33, 2, 6, 7, 36, 11]",
+          "type": "json"
+        }
+      ]
+    },
+    "error": {
+      "fields": {
+        "Error 4xx": [
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "TrafficNotFound",
+            "description": "<p>The current traffic cannot be retrieved</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 400 Bad Request",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "src/telegram_routes.js",
+    "groupTitle": "Telegram"
+  },
+  {
+    "type": "post",
+    "url": "/getPreviousMenu",
+    "title": "Get users previous menu",
+    "version": "0.3.0",
+    "name": "PostGetPreviousMenu",
+    "group": "Telegram",
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "chatId",
+            "description": "<p>Users unique Telegram ChatId</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "skips",
+            "description": "<p>Number of menus to traverse back to</p>"
+          }
+        ]
+      }
+    },
+    "success": {
+      "fields": {
+        "Success 200": [
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "previousMenu",
+            "description": "<p>Previous menu that the user visited</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Success-Response:",
+          "content": "HTTP/1.1 200 Ok\n{\n  \"previousMenu\": \"MakeAndCancel\"\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "error": {
+      "fields": {
+        "Error 4xx": [
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "UserNotFound",
+            "description": "<p>The user of the given chatId cannot be found</p>"
+          },
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "ArrayOutOfBounds",
+            "description": "<p>Number of skips exceeds the length of the menu array</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 400 Bad Request\n{\n  \"previousMenu\": null\n}",
+          "type": "json"
+        },
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 400 Bad Request\n{\n  \"previousMenu\": null\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "src/telegram_routes.js",
+    "groupTitle": "Telegram"
+  },
+  {
+    "type": "post",
+    "url": "/isLoggedIn",
+    "title": "Users Telegram logged in status",
+    "version": "0.3.0",
+    "name": "PostTelegramIsLoggedIn",
+    "group": "Telegram",
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "chatId",
+            "description": "<p>Users unique Telegram ChatId</p>"
+          }
+        ]
+      }
+    },
+    "success": {
+      "fields": {
+        "Success 200": [
+          {
+            "group": "Success 200",
+            "type": "Boolean",
+            "optional": false,
+            "field": "success",
+            "description": "<p>Users logged-in status</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Success-Response:",
+          "content": "HTTP/1.1 200 Ok\n{\n  \"success\": true\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "error": {
+      "fields": {
+        "Error 4xx": [
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "UserNotFound",
+            "description": "<p>User with the given chatID is not found</p>"
+          },
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "MongoError",
+            "description": "<p>Error raised by MongoDB</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 400 Bad Request\n{\n  \"success\": false,\n}",
+          "type": "json"
+        },
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 400 Bad Request\n{\n  \"name\": \"MongoError\",\n  \"err\": \"E11000 duplicate key error index: test.test.$country_1  dup key: { : \\\"XYZ\\\" }\",\n  \"code\": 11000,\n  \"n\": 0,\n  \"connectionId\":10706,\n  \"ok\":1\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "src/telegram_routes.js",
+    "groupTitle": "Telegram"
+  },
+  {
+    "type": "post",
+    "url": "/login",
+    "title": "Add Users ChatId",
+    "version": "0.3.0",
+    "name": "PostTelegramLogin",
+    "group": "Telegram",
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "String",
+            "optional": false,
+            "field": "name",
+            "description": "<p>Users Telegram name</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "chatId",
+            "description": "<p>Users unique Telegram ChatId</p>"
+          }
+        ]
+      }
+    },
+    "success": {
+      "fields": {
+        "Success 200": [
+          {
+            "group": "Success 200",
+            "type": "Boolean",
+            "optional": false,
+            "field": "success",
+            "description": "<p>Success status of logging in</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Success-Response:",
+          "content": "HTTP/1.1 200 Ok\n{\n  \"success\": true\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "error": {
+      "fields": {
+        "Error 4xx": [
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "UnableToFetch",
+            "description": "<p>Error raised by Fetch</p>"
+          },
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "MongoError",
+            "description": "<p>Error raised by MongoDB</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 400 Bad Request\nTypeError: Failed to fetch",
+          "type": "json"
+        },
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 400 Bad Request\n{\n  \"name\": \"MongoError\",\n  \"err\": \"E11000 duplicate key error index: test.test.$country_1  dup key: { : \\\"XYZ\\\" }\",\n  \"code\": 11000,\n  \"n\": 0,\n  \"connectionId\":10706,\n  \"ok\":1\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "src/telegram_routes.js",
+    "groupTitle": "Telegram"
+  },
+  {
+    "type": "post",
+    "url": "/updateMenus",
+    "title": "Update Users visited menus",
+    "version": "0.3.0",
+    "name": "PostUpdateMenus",
+    "group": "Telegram",
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "chatId",
+            "description": "<p>Users unique Telegram ChatId</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "String",
+            "optional": false,
+            "field": "currentMenu",
+            "description": "<p>Users current selected menu</p>"
+          }
+        ]
+      }
+    },
+    "success": {
+      "fields": {
+        "Success 200": [
+          {
+            "group": "Success 200",
+            "type": "Boolean",
+            "optional": false,
+            "field": "success",
+            "description": "<p>Success status on updating users visited menus</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Success-Response:",
+          "content": "HTTP/1.1 200 Ok\n{\n  \"success\": true\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "error": {
+      "fields": {
+        "Error 4xx": [
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "MongoError",
+            "description": "<p>Error raised by MongoDB</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 400 Bad Request\n{\n  \"name\": \"MongoError\",\n  \"err\": \"E11000 duplicate key error index: test.test.$country_1  dup key: { : \\\"XYZ\\\" }\",\n  \"code\": 11000,\n  \"n\": 0,\n  \"connectionId\":10706,\n  \"ok\":1\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "src/telegram_routes.js",
+    "groupTitle": "Telegram"
+  },
+  {
+    "type": "post",
+    "url": "/traffic",
+    "title": "Historical traffic",
+    "version": "0.3.0",
+    "name": "PostTraffic",
+    "group": "Traffic",
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "facility",
+            "description": "<p>Number associated with selected facility</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "Object",
+            "optional": false,
+            "field": "date",
+            "description": "<p>Date range to filter by</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "Number[]",
+            "optional": false,
+            "field": "day",
+            "description": "<p>Days to filter by</p>"
+          }
+        ]
+      }
+    },
+    "success": {
+      "fields": {
+        "Success 200": [
+          {
+            "group": "Success 200",
+            "type": "Object",
+            "optional": false,
+            "field": "_id",
+            "description": "<p>Time when the traffic was collected</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "hour",
+            "description": "<p>Hour when the traffic was collected</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "minute",
+            "description": "<p>Minute when the traffic was collected</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "String",
+            "optional": false,
+            "field": "date",
+            "description": "<p>Date when the traffic was collected</p>"
+          },
+          {
+            "group": "Success 200",
+            "type": "Number",
+            "optional": false,
+            "field": "count",
+            "description": "<p>Number of people in the facility</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Success-Response:",
+          "content": "HTTP/1.1 200 Ok\n[\n  {\n    \"_id\": {\n      \"hour\": \"17\",\n      \"minute\": \"40\"\n    },\n    \"date\": \"2021-07-15T09:40:00.000Z\",\n    \"count\": 33\n  },\n  {\n    \"_id\": {\n      \"hour\": \"17\",\n      \"minute\": \"45\"\n    },\n    \"date\": \"2021-07-15T09:45:00.000Z\",\n    \"count\": 35\n  },\n  {\n    \"_id\": {\n      \"hour\": \"17\",\n      \"minute\": \"50\"\n    },\n  \"date\": \"2021-07-15T09:50:00.000Z\",\n  \"count\": 34\n  },\n]",
+          "type": "json"
+        }
+      ]
+    },
+    "error": {
+      "fields": {
+        "Error 4xx": [
+          {
+            "group": "Error 4xx",
+            "optional": false,
+            "field": "MongoError",
+            "description": "<p>Error raised by MongoDB</p>"
+          }
+        ]
+      },
+      "examples": [
+        {
+          "title": "Error-Response:",
+          "content": "HTTP/1.1 400 Bad Request\n{\n  \"name\": \"MongoError\",\n  \"err\": \"E11000 duplicate key error index: test.test.$country_1  dup key: { : \\\"XYZ\\\" }\",\n  \"code\": 11000,\n  \"n\": 0,\n  \"connectionId\":10706,\n  \"ok\":1\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "src/server.js",
+    "groupTitle": "Traffic"
+  }
+] });
