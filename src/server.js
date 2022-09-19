@@ -877,6 +877,7 @@ const updateTrafficCollection = async () => {
     // Update collection
     try {
       const traffic = await requestTraffic();
+      console.log(`Current Time: ${date}, Current Traffic: ${traffic}`);
       const trafficCollection = db.collection("traffic");
       await trafficCollection.insertOne({ date, traffic });
     } catch {
@@ -891,6 +892,4 @@ const updateTrafficCollection = async () => {
 };
 updateTrafficCollection();
 
-app.listen(process.env.PORT || 5000, () =>
-  wakeUpDyno("https://salty-reaches-24995.herokuapp.com/")
-);
+app.listen(process.env.PORT || 5000, () => wakeUpDyno(process.env.BACKEND_URL));
