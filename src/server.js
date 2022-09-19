@@ -891,6 +891,4 @@ const updateTrafficCollection = async () => {
 };
 updateTrafficCollection();
 
-app.listen(process.env.PORT || 5000, () =>
-  wakeUpDyno("https://salty-reaches-24995.herokuapp.com/")
-);
+app.listen(process.env.PORT || 5000, () => wakeUpDyno(process.env.BACKEND_URL));
