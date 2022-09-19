@@ -877,6 +877,7 @@ const updateTrafficCollection = async () => {
     // Update collection
     try {
       const traffic = await requestTraffic();
+      console.log(`Current Time: ${date}, Current Traffic: ${traffic}`);
       const trafficCollection = db.collection("traffic");
       await trafficCollection.insertOne({ date, traffic });
     } catch {
